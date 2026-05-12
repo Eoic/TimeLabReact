@@ -1,5 +1,5 @@
-export type ThemeMode = 'auto' | 'light' | 'dark' | 'oled'
-export type ResolvedTheme = Exclude<ThemeMode, 'auto'>
+export type ThemeMode = 'auto' | 'light' | 'dark' | 'oled';
+export type ResolvedTheme = Exclude<ThemeMode, 'auto'>;
 export const THEME_STORAGE_KEY = 'timelab-theme';
 export const THEME_MODES = ['auto', 'light', 'dark', 'oled'] as const;
 
