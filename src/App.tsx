@@ -1,5 +1,6 @@
 import Box from '@mui/material/Box';
 import { Header } from './component/Header';
+import { SecondaryHeader } from './component/SecondaryHeader';
 
 function App() {
   return (
@@ -11,6 +12,7 @@ function App() {
       }}
     >
       <Header />
+      <SecondaryHeader />
     </Box>
   );
 }

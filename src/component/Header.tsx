@@ -10,7 +10,12 @@ export function Header() {
     <AppBar
       color="default"
       component="header"
+      elevation={0}
       position="static"
+      sx={{
+        borderBottom: 1,
+        borderColor: 'divider',
+      }}
     >
       <Toolbar>
         <Box

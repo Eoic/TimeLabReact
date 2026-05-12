@@ -1,6 +1,23 @@
 import Icon from '@mui/material/Icon';
 
-type MaterialSymbolName = 'palette' | 'vital_signs';
+type MaterialSymbolName =
+  | 'add'
+  | 'auto_awesome'
+  | 'chevron_left'
+  | 'chevron_right'
+  | 'delete'
+  | 'done_all'
+  | 'download'
+  | 'edit'
+  | 'folder'
+  | 'folder_open'
+  | 'grid_view'
+  | 'hourglass_empty'
+  | 'keyboard_arrow_down'
+  | 'palette'
+  | 'pending_actions'
+  | 'upload'
+  | 'vital_signs';
 
 type MaterialSymbolProps = {
   name: MaterialSymbolName;
