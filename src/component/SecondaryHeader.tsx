@@ -3,83 +3,206 @@ import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import IconButton from '@mui/material/IconButton';
 import Toolbar from '@mui/material/Toolbar';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { MaterialSymbol } from './MaterialSymbol';
 import { LabelToggle } from './LabelToggle';
+import { MaterialSymbol } from './MaterialSymbol';
+import type { MaterialSymbolName } from './MaterialSymbol';
 import { ProjectManager } from './ProjectManager';
 
-export function SecondaryHeader() {
+type PrimaryAction = {
+  label: string;
+  icon: MaterialSymbolName;
+  disabled?: boolean;
+};
+
+const primaryActions: PrimaryAction[] = [
+  {
+    label: 'Upload data',
+    icon: 'upload',
+  },
+  {
+    label: 'Manage data',
+    icon: 'database',
+  },
+  {
+    label: 'Export labels',
+    icon: 'download',
+    disabled: true,
+  },
+  {
+    label: 'Load example',
+    icon: 'auto_awesome',
+    disabled: true,
+  },
+];
+
+function DesktopActionButtons() {
   return (
-    <Toolbar
-      component="section"
-      variant="dense"
+    <Box
       sx={{
-        borderBottom: 1,
-        borderColor: 'divider',
-        gap: 1,
-        overflowX: 'auto',
-        py: 1.5,
+        display: {
+          lg: 'contents',
+          xs: 'none',
+        },
+      }}
+    >
+      {primaryActions.map((action) => (
+        <Button
+          disabled={action.disabled}
+          key={action.label}
+          size="small"
+          startIcon={<MaterialSymbol name={action.icon} />}
+          variant="outlined"
+        >
+          {action.label}
+        </Button>
+      ))}
+    </Box>
+  );
+}
+
+function IconActionButtons() {
+  return (
+    <Box
+      sx={{
+        display: {
+          lg: 'none',
+          xs: 'contents',
+        },
+      }}
+    >
+      {primaryActions.map((action) => (
+        <Tooltip key={action.label} title={action.label}>
+          <span>
+            <IconButton aria-label={action.label} disabled={action.disabled} size="small">
+              <MaterialSymbol name={action.icon} />
+            </IconButton>
+          </span>
+        </Tooltip>
+      ))}
+    </Box>
+  );
+}
+
+function PrimaryActions() {
+  return (
+    <Box
+      sx={{
+        alignItems: 'center',
+        display: 'flex',
+        flex: '0 0 auto',
+        flexWrap: 'nowrap',
+        gap: {
+          lg: 1,
+          xs: 0.5,
+        },
       }}
     >
       <ProjectManager />
+      <DesktopActionButtons />
+      <IconActionButtons />
+    </Box>
+  );
+}
 
-      <Button
-        startIcon={<MaterialSymbol name="upload" />}
-        variant="outlined"
+function PageNavigation() {
+  return (
+    <ButtonGroup aria-label="Page navigation" size="small" variant="outlined">
+      <IconButton aria-label="Previous page" disabled size="small">
+        <MaterialSymbol name="chevron_left" />
+      </IconButton>
+      <Box
+        sx={{
+          alignItems: 'center',
+          display: 'flex',
+          px: 1.5,
+        }}
       >
-        Upload data
-      </Button>
+        <Typography noWrap variant="body2">
+          1 / 1
+        </Typography>
+      </Box>
+      <IconButton aria-label="Next page" disabled size="small">
+        <MaterialSymbol name="chevron_right" />
+      </IconButton>
+    </ButtonGroup>
+  );
+}
 
-      <Button
-        startIcon={<MaterialSymbol name="folder_open" />}
-        variant="outlined"
+function ContextActions() {
+  return (
+    <Box
+      sx={{
+        alignItems: 'center',
+        display: 'flex',
+        flex: '0 0 auto',
+        flexWrap: 'nowrap',
+        gap: {
+          sm: 1,
+          xs: 0.5,
+        },
+      }}
+    >
+      <Box
+        sx={{
+          display: {
+            lg: 'block',
+            xs: 'none',
+          },
+        }}
       >
-        Manage data
-      </Button>
-
-      <Button
-        disabled
-        startIcon={<MaterialSymbol name="download" />}
-        variant="outlined"
+        <LabelToggle />
+      </Box>
+      <Box
+        sx={{
+          display: {
+            lg: 'none',
+            xs: 'block',
+          },
+        }}
       >
-        Export labels
-      </Button>
+        <LabelToggle compact />
+      </Box>
 
-      <Button
-        disabled
-        startIcon={<MaterialSymbol name="auto_awesome" />}
-        variant="outlined"
-      >
-        Load example
-      </Button>
-
-      <Box sx={{ flexGrow: 1 }} />
-
-      <LabelToggle />
-
-      <ButtonGroup aria-label="Page navigation" variant="outlined">
-        <IconButton aria-label="Previous page" disabled size="small">
-          <MaterialSymbol name="chevron_left" />
-        </IconButton>
-        <Box
-          sx={{
-            alignItems: 'center',
-            borderColor: 'divider',
-            display: 'flex',
-          }}
-        >
-          <Typography noWrap variant="body2">
-            1 / 1
-          </Typography>
-        </Box>
-        <IconButton aria-label="Next page" disabled size="small">
-          <MaterialSymbol name="chevron_right" />
-        </IconButton>
-      </ButtonGroup>
+      <PageNavigation />
 
       <IconButton aria-label="Open panel layout" size="small">
         <MaterialSymbol name="grid_view" />
       </IconButton>
-    </Toolbar>
+    </Box>
+  );
+}
+
+export function SecondaryHeader() {
+  return (
+    <Box
+      component="nav"
+      sx={{
+        bgcolor: 'background.paper',
+        borderBottom: 1,
+        borderColor: 'divider',
+      }}
+    >
+      <Toolbar
+        sx={{
+          alignItems: 'center',
+          display: 'flex',
+          flexWrap: 'wrap',
+          columnGap: {
+            lg: 2,
+            xs: 1,
+          },
+          justifyContent: 'space-between',
+          minHeight: 'auto',
+          minWidth: 0,
+          py: 1,
+          rowGap: 1,
+        }}
+      >
+        <PrimaryActions />
+        <ContextActions />
+      </Toolbar>
+    </Box>
   );
 }

@@ -8,6 +8,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import { useId, useMemo, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { MaterialSymbol } from './MaterialSymbol';
@@ -122,10 +123,21 @@ export function ProjectManager() {
         endIcon={<MaterialSymbol name="keyboard_arrow_down" />}
         id="project-manager-button"
         onClick={openProjectMenu}
+        size="small"
         startIcon={<MaterialSymbol name="folder" />}
+        sx={{
+          justifyContent: 'space-between',
+          maxWidth: {
+            sm: 280,
+            xs: 180,
+          },
+          minWidth: 0,
+        }}
         variant="outlined"
       >
-        {selectedProject.name}
+        <Typography component="span" noWrap variant="button">
+          {selectedProject.name}
+        </Typography>
       </Button>
 
       <Menu

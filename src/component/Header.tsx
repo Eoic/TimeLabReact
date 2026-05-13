@@ -5,6 +5,24 @@ import Typography from '@mui/material/Typography';
 import { MaterialSymbol } from './MaterialSymbol';
 import { ThemeSelector } from './ThemeSelector';
 
+function Brand() {
+  return (
+    <Box
+      sx={{
+        alignItems: 'center',
+        display: 'flex',
+        gap: 1,
+        minWidth: 'max-content',
+      }}
+    >
+      <MaterialSymbol name="vital_signs" />
+      <Typography component="span" noWrap variant="h6">
+        TimeLab
+      </Typography>
+    </Box>
+  );
+}
+
 export function Header() {
   return (
     <AppBar
@@ -17,21 +35,19 @@ export function Header() {
         borderColor: 'divider',
       }}
     >
-      <Toolbar>
-        <Box
-          sx={{
-            alignItems: 'center',
-            display: 'flex',
-            flexGrow: 1,
-            gap: 1,
-          }}
-        >
-          <MaterialSymbol name="vital_signs" />
-          <Typography component="span" variant="h6">
-            TimeLab
-          </Typography>
-        </Box>
-
+      <Toolbar
+        sx={{
+          alignItems: 'center',
+          display: 'flex',
+          gap: 2,
+          justifyContent: 'space-between',
+          minHeight: {
+            sm: 64,
+            xs: 56,
+          },
+        }}
+      >
+        <Brand />
         <ThemeSelector />
       </Toolbar>
     </AppBar>

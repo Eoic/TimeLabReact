@@ -1,6 +1,6 @@
 import Icon from '@mui/material/Icon';
 
-type MaterialSymbolName =
+export type MaterialSymbolName =
   | 'add'
   | 'auto_awesome'
   | 'chevron_left'
@@ -17,7 +17,8 @@ type MaterialSymbolName =
   | 'palette'
   | 'pending_actions'
   | 'upload'
-  | 'vital_signs';
+  | 'vital_signs'
+  | 'database';
 
 type MaterialSymbolProps = {
   name: MaterialSymbolName;
