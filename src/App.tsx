@@ -1,18 +1,22 @@
 import Box from '@mui/material/Box';
 import { Header } from './component/Header';
 import { SecondaryHeader } from './component/SecondaryHeader';
+import { WorkspaceLayout } from './component/WorkspaceLayout';
 
 function App() {
   return (
     <Box
-      component="main"
       sx={{
         bgcolor: 'background.default',
-        minHeight: '100svh',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100svh',
+        overflow: 'hidden',
       }}
     >
       <Header />
       <SecondaryHeader />
+      <WorkspaceLayout />
     </Box>
   );
 }
