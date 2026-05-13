@@ -7,11 +7,11 @@ import DialogTitle from '@mui/material/DialogTitle';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useId, useMemo, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { MaterialSymbol } from './MaterialSymbol';
+import { ProjectDialog } from './ProjectDialog';
 
 type Project = {
   id: string;
@@ -19,6 +19,12 @@ type Project = {
 };
 
 type ProjectDialogMode = 'create' | 'rename';
+
+type ProjectDialogState = {
+  title: string;
+  isOpen: boolean;
+  mode: ProjectDialogMode;
+};
 
 const defaultProject: Project = {
   id: 'default',
@@ -30,7 +36,7 @@ export function ProjectManager() {
   const [projects, setProjects] = useState<Project[]>([defaultProject]);
   const [selectedProjectId, setSelectedProjectId] = useState(defaultProject.id);
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
-  const [dialogMode, setDialogMode] = useState<ProjectDialogMode | null>(null);
+  const [projectDialog, setProjectDialog] = useState<ProjectDialogState | null>(null);
   const [draftName, setDraftName] = useState('');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -52,13 +58,25 @@ export function ProjectManager() {
 
   const openCreateDialog = () => {
     setDraftName('');
-    setDialogMode('create');
+
+    setProjectDialog({
+      isOpen: true,
+      mode: 'create',
+      title: 'New project'
+    });
+
     closeProjectMenu();
   };
 
   const openRenameDialog = () => {
     setDraftName(selectedProject.name);
-    setDialogMode('rename');
+
+    setProjectDialog({
+      isOpen: true,
+      mode: 'rename',
+      title: 'Rename project'
+    });
+
     closeProjectMenu();
   };
 
@@ -68,7 +86,18 @@ export function ProjectManager() {
   };
 
   const closeProjectDialog = () => {
-    setDialogMode(null);
+    setProjectDialog((currentDialog) =>
+      currentDialog === null
+        ? currentDialog
+        : {
+          ...currentDialog,
+          isOpen: false,
+        },
+    );
+  };
+
+  const resetProjectDialog = () => {
+    setProjectDialog(null);
     setDraftName('');
   };
 
@@ -79,22 +108,32 @@ export function ProjectManager() {
       return;
     }
 
-    if (dialogMode === 'create') {
-      const newProject = {
-        id: crypto.randomUUID(),
-        name: trimmedName,
-      };
-
-      setProjects((currentProjects) => [...currentProjects, newProject]);
-      setSelectedProjectId(newProject.id);
+    if (!projectDialog?.mode){
+      return;
     }
 
-    if (dialogMode === 'rename') {
-      setProjects((currentProjects) =>
-        currentProjects.map((project) =>
-          project.id === selectedProject.id ? { ...project, name: trimmedName } : project,
-        ),
-      );
+    switch (projectDialog.mode) {
+      case 'create': {
+        const newProject = {
+          id: crypto.randomUUID(),
+          name: trimmedName,
+        };
+
+        setProjects((currentProjects) => [...currentProjects, newProject]);
+        setSelectedProjectId(newProject.id);
+        break;
+      }
+      case 'rename': {
+        setProjects((currentProjects) =>
+          currentProjects.map((project) =>
+            project.id === selectedProject.id ? { ...project, name: trimmedName } : project,
+          ),
+        );
+
+        break;
+      }
+      default:
+        break;
     }
 
     closeProjectDialog();
@@ -111,6 +150,7 @@ export function ProjectManager() {
 
       return nextProjects.length > 0 ? nextProjects : [defaultProject];
     });
+
     setIsDeleteDialogOpen(false);
   };
 
@@ -189,34 +229,23 @@ export function ProjectManager() {
         </MenuItem>
       </Menu>
 
-      <Dialog fullWidth maxWidth="xs" onClose={closeProjectDialog} open={dialogMode !== null}>
-        <DialogTitle>{dialogMode === 'create' ? 'New project' : 'Rename project'}</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            fullWidth
-            id={nameInputId}
-            label="Project name"
-            margin="dense"
-            onChange={(event) => {
-              setDraftName(event.target.value);
-            }}
-            value={draftName}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={closeProjectDialog}>Cancel</Button>
-          <Button disabled={!draftName.trim()} onClick={saveProjectDialog} variant="contained">
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ProjectDialog
+        id={nameInputId}
+        value={draftName}
+        isOpen={projectDialog?.isOpen ?? false}
+        onChange={(event) => setDraftName(event.target.value)}
+        onClose={closeProjectDialog}
+        onExited={resetProjectDialog}
+        onSave={saveProjectDialog}
+        title={projectDialog?.title ?? ''}
+      />
 
       <Dialog
         fullWidth
         maxWidth="xs"
         onClose={() => setIsDeleteDialogOpen(false)}
         open={isDeleteDialogOpen}
+        disableAutoFocus
       >
         <DialogTitle>Delete project</DialogTitle>
         <DialogContent>
