@@ -18,7 +18,6 @@ const themeOptions: Array<{ label: string; value: ThemeMode }> = [
 export function ThemeSelector() {
   const { setThemeMode, themeMode } = useTheme();
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
-
   const isOpen = Boolean(anchorElement);
 
   const openMenu = (event: MouseEvent<HTMLButtonElement>) => {

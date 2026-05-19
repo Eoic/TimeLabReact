@@ -6,14 +6,16 @@ import { MaterialSymbol } from './MaterialSymbol';
 
 type LabelToggleProps = {
   compact?: boolean;
+  onClick?: () => void;
 };
 
-export function LabelToggle({ compact = false }: LabelToggleProps) {
+export function LabelToggle({ compact = false, onClick}: LabelToggleProps) {
   const [isLabeled, setIsLabeled] = useState(false);
   const label = isLabeled ? 'Labeled' : 'Unlabeled';
 
   function handleClick(_event: React.MouseEvent<HTMLButtonElement>) {
     setIsLabeled(!isLabeled);
+    onClick?.();
   }
 
   if (compact) {
