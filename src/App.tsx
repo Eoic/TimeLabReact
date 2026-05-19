@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box';
-import { Header } from './component/Header';
-import { SecondaryHeader } from './component/SecondaryHeader';
-import { WorkspaceLayout } from './component/WorkspaceLayout';
+import { Header } from './components/Header';
+import { SecondaryHeader } from './components/SecondaryHeader';
+import { WorkspaceLayout } from './components/WorkspaceLayout';
 
 function App() {
   return (

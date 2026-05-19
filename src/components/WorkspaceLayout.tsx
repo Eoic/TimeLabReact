@@ -52,20 +52,20 @@ function WorkspacePanel({
       sx={{
         bgcolor: 'background.paper',
         height: {
-          md: '100%',
+          lg: '100%',
           xs: 'auto',
         },
         minHeight: {
-          md: 0,
+          lg: 0,
           xs: 'auto',
         },
         minWidth: 0,
         overflow: {
-          md: 'auto',
+          lg: 'auto',
           xs: 'visible',
         },
         p: {
-          md: 2,
+          lg: 2,
           xs: 1.5,
         },
       }}
@@ -86,20 +86,20 @@ export function WorkspaceLayout() {
         flex: '1 1 auto',
         gap: 0,
         gridTemplateAreas: {
-          md: '"data center inspector"',
+          lg: '"data center inspector"',
           xs: '"center" "data" "inspector"',
         },
         gridTemplateColumns: {
-          md: '360px minmax(0, 1fr) 360px',
+          lg: '300px minmax(600px, 1fr) 300px',
           xs: 'minmax(0, 1fr)',
         },
         gridTemplateRows: {
-          md: 'minmax(0, 1fr)',
+          lg: 'minmax(0, 1fr)',
           xs: 'auto auto auto',
         },
         minHeight: 0,
         overflow: {
-          md: 'hidden',
+          lg: 'hidden',
           xs: 'auto',
         },
       }}
@@ -109,7 +109,7 @@ export function WorkspaceLayout() {
           borderBottomColor: 'divider',
           borderBottomStyle: 'solid',
           borderBottomWidth: {
-            md: 0,
+            lg: 0,
             xs: 1,
           },
           display: 'flex',
@@ -117,7 +117,7 @@ export function WorkspaceLayout() {
           gap: 0,
           gridArea: 'center',
           minHeight: {
-            md: 0,
+            lg: 0,
             xs: 'auto',
           },
           minWidth: 0,
@@ -126,11 +126,11 @@ export function WorkspaceLayout() {
         <Box
           sx={{
             flex: {
-              md: '2 1 0',
+              lg: '2 1 0',
               xs: '0 0 auto',
             },
             minHeight: {
-              md: 0,
+              lg: 0,
               xs: 320,
             },
           }}
@@ -145,18 +145,18 @@ export function WorkspaceLayout() {
         <Box
           sx={{
             flex: {
-              md: '1 1 0',
+              lg: '1 1 0',
               xs: '0 0 auto',
             },
             borderTopColor: 'divider',
             borderTopStyle: 'solid',
             borderTopWidth: 1,
             maxHeight: {
-              md: 370,
+              lg: 370,
               xs: 'none',
             },
             minHeight: {
-              md: 0,
+              lg: 0,
               xs: 'auto',
             },
           }}
@@ -174,18 +174,18 @@ export function WorkspaceLayout() {
           borderBottomColor: 'divider',
           borderBottomStyle: 'solid',
           borderBottomWidth: {
-            md: 0,
+            lg: 0,
             xs: 1,
           },
           borderRightColor: 'divider',
           borderRightStyle: 'solid',
           borderRightWidth: {
-            md: 1,
+            lg: 1,
             xs: 0,
           },
           gridArea: 'data',
           minHeight: {
-            md: 0,
+            lg: 0,
             xs: 'auto',
           },
           minWidth: 0,
@@ -203,18 +203,18 @@ export function WorkspaceLayout() {
           borderLeftColor: 'divider',
           borderLeftStyle: 'solid',
           borderLeftWidth: {
-            md: 1,
+            lg: 1,
             xs: 0,
           },
           borderTopColor: 'divider',
           borderTopStyle: 'solid',
           borderTopWidth: {
-            md: 0,
+            lg: 0,
             xs: 1,
           },
           gridArea: 'inspector',
           minHeight: {
-            md: 0,
+            lg: 0,
             xs: 'auto',
           },
           minWidth: 0,
