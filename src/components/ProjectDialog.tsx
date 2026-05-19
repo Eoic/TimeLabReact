@@ -26,6 +26,14 @@ export function ProjectDialog({
   title,
   value,
 }: ProjectDialogProps) {
+  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== 'Enter') {
+      return;
+    }
+
+    onSave();
+  }
+
   return (
     <Dialog
       disableRestoreFocus
@@ -33,6 +41,7 @@ export function ProjectDialog({
       maxWidth="xs"
       onClose={onClose}
       open={isOpen}
+      onKeyDown={handleKeyDown}
       slotProps={{
         transition: {
           onExited,
