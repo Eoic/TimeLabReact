@@ -16,3 +16,8 @@ export interface Project extends IDBRecord {
   /** Whether this project is archived */
   isArchived: boolean;
 }
+
+export interface ProjectFormData {
+  title: string;
+  description: string;
+}

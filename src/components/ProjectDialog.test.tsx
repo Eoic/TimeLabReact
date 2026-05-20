@@ -11,7 +11,10 @@ const defaultProps = {
   onExited: vi.fn(),
   onSave: vi.fn(),
   title: 'New project',
-  value: 'Client work',
+  values: {
+    title: 'Client work',
+    description: 'Example project description',
+  },
 };
 
 describe('ProjectDialog', () => {
@@ -19,11 +22,11 @@ describe('ProjectDialog', () => {
     render(<ProjectDialog {...defaultProps} />);
 
     expect(screen.getByRole('heading', { name: 'New project' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Project name')).toHaveValue('Client work');
+    expect(screen.getByLabelText('Title')).toHaveValue('Client work');
   });
 
   it('disables save when the project name is blank', () => {
-    render(<ProjectDialog {...defaultProps} value="   " />);
+    render(<ProjectDialog {...defaultProps} values={{ title: '   ', description: '' }} />);
 
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
   });
@@ -31,8 +34,8 @@ describe('ProjectDialog', () => {
   it('calls onChange when the user edits the project name', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(<ProjectDialog {...defaultProps} onChange={onChange} value="" />);
-    await user.type(screen.getByLabelText('Project name'), 'Roadmap');
+    render(<ProjectDialog {...defaultProps} onChange={onChange} values={{ title: '', description: '' }} />);
+    await user.type(screen.getByLabelText('Title'), 'Roadmap');
 
     expect(onChange).toHaveBeenCalled();
   });
@@ -52,7 +55,7 @@ describe('ProjectDialog', () => {
     render(<ProjectDialog {...defaultProps} onSave={onSave} />);
     await user.keyboard('{Enter>}{/Enter}');
 
-    expect(screen.getByRole('textbox')).toHaveFocus();
+    expect(screen.getByLabelText('Title')).toHaveFocus();
     expect(onSave).toHaveBeenCalledTimes(1);
   });
 });
