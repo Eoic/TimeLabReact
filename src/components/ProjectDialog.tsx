@@ -3,12 +3,18 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
+import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
+
+type ProjectValues = {
+  title: string;
+  description: string;
+};
 
 type ProjectDialogProps = {
   id: string;
   title: string;
-  value: string;
+  values: ProjectValues;
   isOpen: boolean;
   onChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement>;
   onClose: VoidFunction;
@@ -16,12 +22,17 @@ type ProjectDialogProps = {
   onSave: VoidFunction;
 };
 
-export function ProjectDialog({ id, isOpen, onChange, onClose, onExited, onSave, title, value }: ProjectDialogProps) {
+export function ProjectDialog({ id, isOpen, onChange, onClose, onExited, onSave, title, values }: ProjectDialogProps) {
   function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
     if (event.key !== 'Enter') {
       return;
     }
 
+    if (event.shiftKey || event.altKey || event.ctrlKey) {
+      return;
+    }
+
+    event.preventDefault();
     onSave();
   }
 
@@ -41,11 +52,22 @@ export function ProjectDialog({ id, isOpen, onChange, onClose, onExited, onSave,
     >
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
-        <TextField autoFocus fullWidth id={id} label="Project name" margin="dense" onChange={onChange} value={value} />
+        <Stack spacing={2} sx={{ pt: 1 }}>
+          <TextField name="title" autoFocus fullWidth id={id} label="Title" onChange={onChange} value={values.title} />
+          <TextField
+            name="description"
+            fullWidth
+            label="Description"
+            minRows={3}
+            multiline
+            onChange={onChange}
+            value={values.description}
+          />
+        </Stack>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button disabled={!value.trim()} onClick={onSave} variant="contained">
+        <Button disabled={!values.title.trim()} onClick={onSave} variant="contained">
           Save
         </Button>
       </DialogActions>

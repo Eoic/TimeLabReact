@@ -18,6 +18,10 @@ const themePalette: Record<
     };
     divider: string;
     mode: 'dark' | 'light';
+    primary: {
+      contrastText: string;
+      main: string;
+    };
     text: {
       primary: string;
       secondary: string;
@@ -31,6 +35,10 @@ const themePalette: Record<
       paper: '#ffffff',
     },
     divider: '#dee2e6',
+    primary: {
+      main: '#4f56d9',
+      contrastText: '#ffffff',
+    },
     text: {
       primary: '#212529',
       secondary: '#6c757d',
@@ -43,6 +51,10 @@ const themePalette: Record<
       paper: '#242424',
     },
     divider: '#404040',
+    primary: {
+      main: '#8ea2ff',
+      contrastText: '#0b1020',
+    },
     text: {
       primary: '#ffffff',
       secondary: 'rgba(255, 255, 255, 0.6)',
@@ -55,6 +67,10 @@ const themePalette: Record<
       paper: '#0a0a0a',
     },
     divider: '#2a2a2a',
+    primary: {
+      main: '#a78bfa',
+      contrastText: '#14091f',
+    },
     text: {
       primary: '#ffffff',
       secondary: 'rgba(255, 255, 255, 0.7)',
@@ -71,9 +87,7 @@ export function MuiThemeBridge({ children }: MuiThemeBridgeProps) {
     return createTheme({
       palette: {
         mode: palette.mode,
-        primary: {
-          main: '#646cff',
-        },
+        primary: palette.primary,
         background: palette.background,
         divider: palette.divider,
         text: palette.text,
@@ -101,6 +115,22 @@ export function MuiThemeBridge({ children }: MuiThemeBridgeProps) {
         MuiIcon: {
           defaultProps: {
             baseClassName: 'material-symbols-rounded',
+          },
+        },
+        MuiOutlinedInput: {
+          styleOverrides: {
+            root: {
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderWidth: 2,
+              },
+            },
+          },
+        },
+        MuiPaper: {
+          styleOverrides: {
+            root: {
+              backgroundImage: 'none',
+            },
           },
         },
       },

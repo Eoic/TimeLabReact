@@ -31,8 +31,11 @@ export function Header() {
       elevation={0}
       position="static"
       sx={{
+        bgcolor: 'background.paper',
         borderBottom: 1,
         borderColor: 'divider',
+        color: 'text.primary',
+        flexShrink: 0,
       }}
     >
       <Toolbar

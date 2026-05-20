@@ -131,6 +131,8 @@ function PageNavigation() {
 }
 
 function ContextActions() {
+  const itemBrowserTitle = 'Browse labeled items';
+
   return (
     <Box
       sx={{
@@ -167,9 +169,11 @@ function ContextActions() {
 
       <PageNavigation />
 
-      <IconButton aria-label="Open panel layout" size="small">
-        <MaterialSymbol name="grid_view" />
-      </IconButton>
+      <Tooltip title={itemBrowserTitle}>
+        <IconButton aria-label={itemBrowserTitle} size="medium">
+          <MaterialSymbol name="grid_view" />
+        </IconButton>
+      </Tooltip>
     </Box>
   );
 }
@@ -182,22 +186,24 @@ export function SecondaryHeader() {
         bgcolor: 'background.paper',
         borderBottom: 1,
         borderColor: 'divider',
+        flexShrink: 0,
+        overflowX: 'auto',
       }}
     >
       <Toolbar
         sx={{
           alignItems: 'center',
           display: 'flex',
-          flexWrap: 'wrap',
+          flexWrap: 'nowrap',
           columnGap: {
             lg: 2,
             xs: 1,
           },
           justifyContent: 'space-between',
           minHeight: 'auto',
-          minWidth: 0,
+          minWidth: '100%',
           py: 1,
-          rowGap: 1,
+          width: 'max-content',
         }}
       >
         <PrimaryActions />

@@ -1,6 +1,7 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { MaterialSymbol } from './MaterialSymbol';
+import { PlotConfiguration } from './PlotConfiguration';
 import type { MaterialSymbolName } from './MaterialSymbol';
 
 type PanelHeaderProps = {
@@ -11,6 +12,7 @@ type PanelHeaderProps = {
 type WorkspacePanelProps = PanelHeaderProps & {
   children?: React.ReactNode;
   component?: 'aside' | 'section';
+  hasToolbarGutters?: boolean;
 };
 
 function PanelHeader({ icon, title }: PanelHeaderProps) {
@@ -20,7 +22,7 @@ function PanelHeader({ icon, title }: PanelHeaderProps) {
         alignItems: 'center',
         display: 'flex',
         gap: 1,
-        mb: 2,
+        mb: 1,
         minWidth: 0,
       }}
     >
@@ -40,7 +42,13 @@ function PanelHeader({ icon, title }: PanelHeaderProps) {
   );
 }
 
-function WorkspacePanel({ children, component = 'section', icon, title }: WorkspacePanelProps) {
+function WorkspacePanel({
+  children,
+  component = 'section',
+  hasToolbarGutters = false,
+  icon,
+  title,
+}: WorkspacePanelProps) {
   return (
     <Box
       component={component}
@@ -59,7 +67,17 @@ function WorkspacePanel({ children, component = 'section', icon, title }: Worksp
           lg: 'auto',
           xs: 'visible',
         },
-        p: {
+        px: hasToolbarGutters
+          ? {
+              sm: 3,
+              xs: 2,
+            }
+          : {
+              sm: 3,
+              lg: 2,
+              xs: 2,
+            },
+        py: {
           lg: 2,
           xs: 1.5,
         },
@@ -186,10 +204,8 @@ export function WorkspaceLayout() {
           minWidth: 0,
         }}
       >
-        <WorkspacePanel component="aside" icon="database" title="Data sources">
-          <Typography color="text.secondary" variant="body2">
-            Project inputs and time-series collections.
-          </Typography>
+        <WorkspacePanel component="aside" hasToolbarGutters icon="tune" title="Plot configuration">
+          <PlotConfiguration />
         </WorkspacePanel>
       </Box>
 
@@ -215,7 +231,7 @@ export function WorkspaceLayout() {
           minWidth: 0,
         }}
       >
-        <WorkspacePanel component="aside" icon="grid_view" title="Inspector">
+        <WorkspacePanel component="aside" icon="label" title="Labels">
           <Typography color="text.secondary" variant="body2">
             Selection details and labeling tools.
           </Typography>

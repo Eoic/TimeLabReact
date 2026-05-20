@@ -15,7 +15,8 @@ import { ProjectDialog } from './ProjectDialog';
 
 type Project = {
   id: string;
-  name: string;
+  title: string;
+  description: string;
 };
 
 type ProjectDialogMode = 'create' | 'rename';
@@ -28,7 +29,8 @@ type ProjectDialogState = {
 
 const defaultProject: Project = {
   id: 'default',
-  name: 'Untitled',
+  title: 'Untitled',
+  description: '',
 };
 
 export function ProjectManager() {
@@ -37,7 +39,7 @@ export function ProjectManager() {
   const [selectedProjectId, setSelectedProjectId] = useState(defaultProject.id);
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
   const [projectDialog, setProjectDialog] = useState<ProjectDialogState | null>(null);
-  const [draftName, setDraftName] = useState('');
+  const [draftState, setDraftState] = useState<Omit<Project, 'id'>>({ title: '', description: '' });
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const selectedProject = useMemo(
@@ -57,7 +59,7 @@ export function ProjectManager() {
   };
 
   const openCreateDialog = () => {
-    setDraftName('');
+    setDraftState({ title: '', description: '' });
 
     setProjectDialog({
       isOpen: true,
@@ -69,7 +71,10 @@ export function ProjectManager() {
   };
 
   const openRenameDialog = () => {
-    setDraftName(selectedProject.name);
+    setDraftState({
+      title: selectedProject.title,
+      description: selectedProject.description,
+    });
 
     setProjectDialog({
       isOpen: true,
@@ -98,13 +103,14 @@ export function ProjectManager() {
 
   const resetProjectDialog = () => {
     setProjectDialog(null);
-    setDraftName('');
+    setDraftState({ title: '', description: '' });
   };
 
   const saveProjectDialog = () => {
-    const trimmedName = draftName.trim();
+    const title = draftState.title.trim();
+    const description = draftState.description;
 
-    if (!trimmedName) {
+    if (!title) {
       return;
     }
 
@@ -112,11 +118,16 @@ export function ProjectManager() {
       return;
     }
 
+    const projectData = {
+      title,
+      description,
+    };
+
     switch (projectDialog.mode) {
       case 'create': {
         const newProject = {
           id: crypto.randomUUID(),
-          name: trimmedName,
+          ...projectData,
         };
 
         setProjects((currentProjects) => [...currentProjects, newProject]);
@@ -126,7 +137,7 @@ export function ProjectManager() {
       case 'rename': {
         setProjects((currentProjects) =>
           currentProjects.map((project) =>
-            project.id === selectedProject.id ? { ...project, name: trimmedName } : project,
+            project.id === selectedProject.id ? { ...project, ...projectData } : project,
           ),
         );
 
@@ -176,7 +187,7 @@ export function ProjectManager() {
         variant="outlined"
       >
         <Typography component="span" noWrap variant="button">
-          {selectedProject.name}
+          {selectedProject.title}
         </Typography>
       </Button>
 
@@ -205,7 +216,7 @@ export function ProjectManager() {
             }}
             selected={project.id === selectedProject.id}
           >
-            {project.name}
+            {project.title}
           </MenuItem>
         ))}
 
@@ -231,9 +242,14 @@ export function ProjectManager() {
 
       <ProjectDialog
         id={nameInputId}
-        value={draftName}
         isOpen={projectDialog?.isOpen ?? false}
-        onChange={(event) => setDraftName(event.target.value)}
+        onChange={(event) =>
+          setDraftState({
+            ...draftState,
+            [event.target.name]: event.target.value,
+          })
+        }
+        values={draftState}
         onClose={closeProjectDialog}
         onExited={resetProjectDialog}
         onSave={saveProjectDialog}
@@ -250,7 +266,7 @@ export function ProjectManager() {
         <DialogTitle>Delete project</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Delete {selectedProject.name}? This removes the project from this session.
+            Delete {selectedProject.title}? This removes the project from this session.
           </DialogContentText>
         </DialogContent>
         <DialogActions>

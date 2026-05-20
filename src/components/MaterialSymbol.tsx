@@ -3,6 +3,7 @@ import Icon from '@mui/material/Icon';
 export type MaterialSymbolName =
   | 'add'
   | 'auto_awesome'
+  | 'check'
   | 'chevron_left'
   | 'chevron_right'
   | 'delete'
@@ -14,8 +15,10 @@ export type MaterialSymbolName =
   | 'grid_view'
   | 'hourglass_empty'
   | 'keyboard_arrow_down'
+  | 'label'
   | 'palette'
   | 'pending_actions'
+  | 'tune'
   | 'upload'
   | 'vital_signs'
   | 'database';
