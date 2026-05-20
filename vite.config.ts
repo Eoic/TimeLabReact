@@ -9,7 +9,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
     coverage: {
-      reportsDirectory: "out/reports"
-    }
+      reportsDirectory: 'out/reports',
+    },
   },
 });

@@ -9,18 +9,21 @@ type MuiThemeBridgeProps = {
   children: ReactNode;
 };
 
-const themePalette: Record<ResolvedTheme, {
-  background: {
-    default: string;
-    paper: string;
-  };
-  divider: string;
-  mode: 'dark' | 'light';
-  text: {
-    primary: string;
-    secondary: string;
-  };
-}> = {
+const themePalette: Record<
+  ResolvedTheme,
+  {
+    background: {
+      default: string;
+      paper: string;
+    };
+    divider: string;
+    mode: 'dark' | 'light';
+    text: {
+      primary: string;
+      secondary: string;
+    };
+  }
+> = {
   light: {
     mode: 'light',
     background: {

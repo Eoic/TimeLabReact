@@ -2,6 +2,7 @@ import js from '@eslint/js';
 import globals from 'globals';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
+import prettierRecommended from 'eslint-plugin-prettier/recommended';
 import tseslint from 'typescript-eslint';
 import { defineConfig, globalIgnores } from 'eslint/config';
 
@@ -11,8 +12,6 @@ export default defineConfig([
     files: ['**/*.{js,jsx,ts,tsx}'],
     rules: {
       curly: ['error', 'all'],
-      'max-len': ['error', { code: 120 }],
-      semi: ['error', 'always'],
     },
   },
   {
@@ -45,6 +44,13 @@ export default defineConfig([
         ...globals.browser,
         ...globals.vitest,
       },
+    },
+  },
+  prettierRecommended,
+  {
+    files: ['**/*.{js,jsx,ts,tsx}'],
+    rules: {
+      'max-len': ['error', { code: 120, ignoreUrls: true }],
     },
   },
 ]);

@@ -62,7 +62,7 @@ export function ProjectManager() {
     setProjectDialog({
       isOpen: true,
       mode: 'create',
-      title: 'New project'
+      title: 'New project',
     });
 
     closeProjectMenu();
@@ -74,7 +74,7 @@ export function ProjectManager() {
     setProjectDialog({
       isOpen: true,
       mode: 'rename',
-      title: 'Rename project'
+      title: 'Rename project',
     });
 
     closeProjectMenu();
@@ -90,9 +90,9 @@ export function ProjectManager() {
       currentDialog === null
         ? currentDialog
         : {
-          ...currentDialog,
-          isOpen: false,
-        },
+            ...currentDialog,
+            isOpen: false,
+          },
     );
   };
 
@@ -108,7 +108,7 @@ export function ProjectManager() {
       return;
     }
 
-    if (!projectDialog?.mode){
+    if (!projectDialog?.mode) {
       return;
     }
 

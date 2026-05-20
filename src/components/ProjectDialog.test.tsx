@@ -31,9 +31,7 @@ describe('ProjectDialog', () => {
   it('calls onChange when the user edits the project name', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-
     render(<ProjectDialog {...defaultProps} onChange={onChange} value="" />);
-
     await user.type(screen.getByLabelText('Project name'), 'Roadmap');
 
     expect(onChange).toHaveBeenCalled();
@@ -42,11 +40,19 @@ describe('ProjectDialog', () => {
   it('calls onSave when the user clicks save', async () => {
     const user = userEvent.setup();
     const onSave = vi.fn();
-
     render(<ProjectDialog {...defaultProps} onSave={onSave} />);
-
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
+    expect(onSave).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onSave on Enter keydown event', async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn();
+    render(<ProjectDialog {...defaultProps} onSave={onSave} />);
+    await user.keyboard('{Enter>}{/Enter}');
+
+    expect(screen.getByRole('textbox')).toHaveFocus();
     expect(onSave).toHaveBeenCalledTimes(1);
   });
 });

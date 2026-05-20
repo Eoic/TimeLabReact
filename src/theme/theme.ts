@@ -4,17 +4,11 @@ export const THEME_STORAGE_KEY = 'timelab-theme';
 export const THEME_MODES = ['auto', 'light', 'dark', 'oled'] as const;
 
 export function isThemeMode(value: unknown): value is ThemeMode {
-  return (
-    typeof value === 'string' &&
-    THEME_MODES.includes(value as (typeof THEME_MODES)[number])
-  );
+  return typeof value === 'string' && THEME_MODES.includes(value as (typeof THEME_MODES)[number]);
 }
 
 export function getSystemTheme(): ResolvedTheme {
-  if (
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-color-scheme: dark)').matches
-  ) {
+  if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
     return 'dark';
   }
 
@@ -69,10 +63,7 @@ export function writeStoredThemeMode(themeMode: ThemeMode) {
   }
 }
 
-export function applyTheme(
-  themeMode: ThemeMode,
-  resolvedTheme = resolveThemeMode(themeMode),
-) {
+export function applyTheme(themeMode: ThemeMode, resolvedTheme = resolveThemeMode(themeMode)) {
   if (typeof document === 'undefined') {
     return;
   }

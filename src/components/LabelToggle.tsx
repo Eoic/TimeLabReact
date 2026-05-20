@@ -9,7 +9,7 @@ type LabelToggleProps = {
   onClick?: () => void;
 };
 
-export function LabelToggle({ compact = false, onClick}: LabelToggleProps) {
+export function LabelToggle({ compact = false, onClick }: LabelToggleProps) {
   const [isLabeled, setIsLabeled] = useState(false);
   const label = isLabeled ? 'Labeled' : 'Unlabeled';
 
@@ -21,12 +21,7 @@ export function LabelToggle({ compact = false, onClick}: LabelToggleProps) {
   if (compact) {
     return (
       <Tooltip title={label}>
-        <IconButton
-          aria-label={label}
-          color={isLabeled ? 'primary' : 'default'}
-          onClick={handleClick}
-          size="small"
-        >
+        <IconButton aria-label={label} color={isLabeled ? 'primary' : 'default'} onClick={handleClick} size="small">
           <MaterialSymbol name={isLabeled ? 'done_all' : 'pending_actions'} />
         </IconButton>
       </Tooltip>

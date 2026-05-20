@@ -40,12 +40,7 @@ function PanelHeader({ icon, title }: PanelHeaderProps) {
   );
 }
 
-function WorkspacePanel({
-  children,
-  component = 'section',
-  icon,
-  title,
-}: WorkspacePanelProps) {
+function WorkspacePanel({ children, component = 'section', icon, title }: WorkspacePanelProps) {
   return (
     <Box
       component={component}

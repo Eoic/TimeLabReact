@@ -10,32 +10,29 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
     <script>
-      ;(() => {
-        const storageKey = 'timelab-theme'
-        const validModes = ['auto', 'light', 'dark', 'oled']
-        let themeMode = 'auto'
+      (() => {
+        const storageKey = 'timelab-theme';
+        const validModes = ['auto', 'light', 'dark', 'oled'];
+        let themeMode = 'auto';
 
         try {
-          const storedTheme = window.localStorage.getItem(storageKey)
+          const storedTheme = window.localStorage.getItem(storageKey);
 
           if (validModes.includes(storedTheme)) {
-            themeMode = storedTheme
+            themeMode = storedTheme;
           }
         } catch {
-          themeMode = 'auto'
+          themeMode = 'auto';
         }
 
-        const prefersDark = window.matchMedia(
-          '(prefers-color-scheme: dark)',
-        ).matches
-        const resolvedTheme =
-          themeMode === 'auto' ? (prefersDark ? 'dark' : 'light') : themeMode
-        const root = document.documentElement
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const resolvedTheme = themeMode === 'auto' ? (prefersDark ? 'dark' : 'light') : themeMode;
+        const root = document.documentElement;
 
-        root.dataset.themeMode = themeMode
-        root.dataset.theme = resolvedTheme
-        root.style.colorScheme = resolvedTheme === 'light' ? 'light' : 'dark'
-      })()
+        root.dataset.themeMode = themeMode;
+        root.dataset.theme = resolvedTheme;
+        root.style.colorScheme = resolvedTheme === 'light' ? 'light' : 'dark';
+      })();
     </script>
     <title>TimeLab</title>
   </head>

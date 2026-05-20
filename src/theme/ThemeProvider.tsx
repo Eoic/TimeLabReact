@@ -12,14 +12,13 @@ import {
 import type { ResolvedTheme, ThemeMode } from './theme';
 
 type ThemeProviderProps = {
-  children: ReactNode
-}
+  children: ReactNode;
+};
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [themeMode, setThemeModeState] = useState<ThemeMode>(readStoredThemeMode);
 
-  const [systemTheme, setSystemTheme] =
-    useState<ResolvedTheme>(getSystemTheme);
+  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(getSystemTheme);
 
   const resolvedTheme = themeMode === 'auto' ? systemTheme : themeMode;
 
