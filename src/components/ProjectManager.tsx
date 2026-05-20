@@ -1,4 +1,5 @@
 import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -28,13 +29,17 @@ type ProjectDialogState = {
   mode: ProjectDialogMode;
 };
 
+type ProjectManagerProps = {
+  isLoading?: boolean;
+};
+
 const defaultProject: Project = {
   id: 'default',
   title: 'Untitled',
   description: '',
 };
 
-export function ProjectManager() {
+export function ProjectManager({ isLoading = false }: ProjectManagerProps) {
   const nameInputId = useId();
   const [projects, setProjects] = useState<Project[]>([defaultProject]);
   const [selectedProjectId, setSelectedProjectId] = useState(defaultProject.id);
@@ -49,13 +54,17 @@ export function ProjectManager() {
   );
 
   const canDeleteSelectedProject = projects.length > 1;
-  const isProjectMenuOpen = Boolean(anchorElement);
+  const isProjectMenuOpen = !isLoading && Boolean(anchorElement);
 
   const closeProjectMenu = () => {
     setAnchorElement(null);
   };
 
   const openProjectMenu = (event: MouseEvent<HTMLButtonElement>) => {
+    if (isLoading) {
+      return;
+    }
+
     setAnchorElement(event.currentTarget);
   };
 
@@ -172,11 +181,13 @@ export function ProjectManager() {
         aria-controls={isProjectMenuOpen ? 'project-manager-menu' : undefined}
         aria-expanded={isProjectMenuOpen ? 'true' : undefined}
         aria-haspopup="menu"
-        endIcon={<MaterialSymbol name="keyboard_arrow_down" />}
+        aria-busy={isLoading || undefined}
+        disabled={isLoading}
+        endIcon={isLoading ? undefined : <MaterialSymbol name="keyboard_arrow_down" />}
         id="project-manager-button"
         onClick={openProjectMenu}
         size="small"
-        startIcon={<MaterialSymbol name="folder" />}
+        startIcon={isLoading ? <CircularProgress color="inherit" size={18} /> : <MaterialSymbol name="folder" />}
         sx={{
           justifyContent: 'space-between',
           maxWidth: {
@@ -188,7 +199,7 @@ export function ProjectManager() {
         variant="outlined"
       >
         <Typography component="span" noWrap variant="button">
-          {selectedProject.title}
+          {isLoading ? 'Loading projects' : selectedProject.title}
         </Typography>
       </Button>
 
