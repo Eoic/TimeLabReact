@@ -1,6 +1,14 @@
 import { IDBFactory, IDBObjectStore as FakeIDBObjectStore } from 'fake-indexeddb';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { deleteRecord, getAllRecords, getRecord, makeOpenDatabase, saveRecord, STORE_PROJECTS } from './storage';
+import {
+  deleteRecord,
+  getAllRecords,
+  getRecord,
+  makeOpenDatabase,
+  insertRecord,
+  updateRecord,
+  STORE_PROJECTS,
+} from './storage';
 import type { Err, Ok } from '../shared/result';
 import { type Project } from './entities';
 
@@ -34,7 +42,7 @@ describe('storage', () => {
   it('saves and reads records from IndexedDB', async () => {
     const record: Project = {
       id: 'project-1',
-      name: 'Client work',
+      title: 'Client work',
       description: 'An example description',
       createdAt: Date.now(),
       updatedAt: null,
@@ -42,7 +50,7 @@ describe('storage', () => {
       isDefault: true,
     };
 
-    const saveResult = await saveRecord(record, STORE_PROJECTS);
+    const saveResult = await insertRecord(record, STORE_PROJECTS);
     const recordResult = await getRecord<Project>(record.id, STORE_PROJECTS);
     const recordsResult = await getAllRecords<Project>(STORE_PROJECTS);
 
@@ -63,8 +71,8 @@ describe('storage', () => {
 
   it('deletes records from IndexedDB', async () => {
     const record: Project = {
-      id: 'project-1',
-      name: 'Client work',
+      id: 'project-1111',
+      title: 'Client work',
       description: 'An example description',
       createdAt: Date.now(),
       updatedAt: null,
@@ -72,7 +80,7 @@ describe('storage', () => {
       isDefault: true,
     };
 
-    const saveResult = await saveRecord(record, STORE_PROJECTS);
+    const saveResult = await insertRecord(record, STORE_PROJECTS);
     const deleteResult = await deleteRecord(record.id, STORE_PROJECTS);
     const recordsResult = await getAllRecords<Project>(STORE_PROJECTS);
 
@@ -87,7 +95,7 @@ describe('storage', () => {
   });
 
   it('returns an error when saving to an unknown store', async () => {
-    const result = await saveRecord({ id: 'project-1' }, 'missing-store');
+    const result = await insertRecord({ id: 'project-1' }, 'missing-store');
 
     expect(result.ok).toBeFalsy();
     expect((result as Err).error.name).toBe('StorageError');
@@ -137,20 +145,31 @@ describe('storage', () => {
     expect(result.error.cause).toEqual(new Error(`Failed to getAllRecords() from ${STORE_PROJECTS}.`));
   });
 
-  it('returns an error when put request fails while saving', async () => {
+  it('returns an error when add request fails while saving', async () => {
+    vi.spyOn(FakeIDBObjectStore.prototype, 'add').mockImplementation(() => makeFailingRequest(null));
     vi.spyOn(FakeIDBObjectStore.prototype, 'put').mockImplementation(() => makeFailingRequest(null));
 
-    const result = await saveRecord({ id: 'project-1' }, STORE_PROJECTS);
+    const resultInsert = await insertRecord({ id: 'project-1' }, STORE_PROJECTS);
+    const resultUpdate = await updateRecord({ id: 'project-1' }, STORE_PROJECTS);
 
-    expect(result.ok).toBe(false);
+    expect(resultInsert.ok).toBe(false);
+    expect(resultUpdate.ok).toBe(false);
 
-    if (result.ok) {
-      throw new Error('Expected saveRecord to fail.');
+    if (resultInsert.ok) {
+      throw new Error('Expected insertRecord to fail.');
     }
 
-    expect(result.error.name).toBe('StorageError');
-    expect(result.error.message).toBe('Failed to save record');
-    expect(result.error.cause).toEqual(new Error('Failed to put() record'));
+    if (resultUpdate.ok) {
+      throw new Error('Expected updateRecord to fail.');
+    }
+
+    expect(resultInsert.error.name).toBe('StorageError');
+    expect(resultInsert.error.message).toContain('Failed to save record');
+    expect(resultInsert.error.cause).toEqual(new Error('Failed to perform action'));
+
+    expect(resultUpdate.error.name).toBe('StorageError');
+    expect(resultUpdate.error.message).toContain("Record doesn't exist");
+    expect(resultUpdate.error.cause).toEqual('Not found');
   });
 
   it('returns an error when delete request fails', async () => {

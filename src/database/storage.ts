@@ -38,7 +38,9 @@ export function makeOpenDatabase(
   };
 }
 
-const _openDatabase = makeOpenDatabase(indexedDB, DB_NAME, DB_VERSION, [STORE_PROJECTS]);
+function _openDatabase() {
+  return makeOpenDatabase(globalThis.indexedDB, DB_NAME, DB_VERSION, [STORE_PROJECTS])();
+}
 
 function _ensureStoreExists(database: IDBDatabase, storeName: string): Result<void, StorageError> {
   if (database.objectStoreNames.contains(storeName)) {
@@ -98,7 +100,11 @@ export async function getRecord<T extends IDBRecord>(
   }
 }
 
-export async function saveRecord(record: IDBRecord, storeName: string): Promise<Result<void, StorageError>> {
+async function _saveRecord<T extends IDBRecord>(
+  record: T,
+  storeName: string,
+  storeAction: (store: IDBObjectStore, record: T) => IDBRequest,
+): Promise<Result<T, StorageError>> {
   try {
     const database = await _openDatabase();
     const storeResult = _ensureStoreExists(database, storeName);
@@ -110,21 +116,39 @@ export async function saveRecord(record: IDBRecord, storeName: string): Promise<
     await new Promise<void>((resolve, reject) => {
       const transaction = database.transaction(storeName, 'readwrite');
       const store = transaction.objectStore(storeName);
-      const request = store.put(record);
+      const request = storeAction(store, record);
 
       request.onsuccess = (): void => {
         resolve();
       };
 
       request.onerror = (): void => {
-        reject(request.error ?? new Error('Failed to put() record'));
+        reject(request.error ?? new Error('Failed to perform action'));
       };
     });
 
-    return ok(undefined);
+    return ok(record);
   } catch (error) {
     return err(new StorageError('Failed to save record', error));
   }
+}
+
+export async function insertRecord<T extends IDBRecord>(record: T, storeName: string) {
+  return await _saveRecord(record, storeName, (store, record) => store.add(record));
+}
+
+export async function updateRecord<T extends IDBRecord & { id: string }>(record: T, storeName: string) {
+  const result = await getRecord<T>(record.id, storeName);
+
+  if (!result.ok) {
+    return err(new StorageError('Failed to check existing record.'));
+  }
+
+  if (result.value === null) {
+    return err(new StorageError("Record doesn't exist.", 'Not found'));
+  }
+
+  return await _saveRecord(record, storeName, (store, record) => store.put(record));
 }
 
 export async function deleteRecord(id: string, storeName: string): Promise<Result<void, StorageError>> {

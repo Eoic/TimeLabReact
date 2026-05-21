@@ -5,12 +5,12 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
-import type { ProjectFormData } from '../database/entities';
+import type { CreateProjectFormData } from '../forms/project';
 
 type ProjectDialogProps = {
   id: string;
   title: string;
-  values: ProjectFormData;
+  values: CreateProjectFormData;
   isOpen: boolean;
   onChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement>;
   onClose: VoidFunction;

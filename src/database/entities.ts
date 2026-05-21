@@ -4,7 +4,7 @@ export interface Project extends IDBRecord {
   /** Unique project identifier */
   id: string;
   /** Project display name */
-  name: string;
+  title: string;
   /** Project description */
   description: string;
   /** When the project was created */
@@ -13,11 +13,4 @@ export interface Project extends IDBRecord {
   updatedAt: number | null;
   /** Whether this is the default project */
   isDefault: boolean;
-  /** Whether this project is archived */
-  isArchived: boolean;
-}
-
-export interface ProjectFormData {
-  title: string;
-  description: string;
 }

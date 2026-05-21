@@ -13,7 +13,7 @@ import { useId, useMemo, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { MaterialSymbol } from './MaterialSymbol';
 import { ProjectDialog } from './ProjectDialog';
-import type { ProjectFormData } from '../database/entities';
+import type { CreateProjectFormData } from '../forms/project';
 
 type Project = {
   id: string;
@@ -45,7 +45,7 @@ export function ProjectManager({ isLoading = false }: ProjectManagerProps) {
   const [selectedProjectId, setSelectedProjectId] = useState(defaultProject.id);
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
   const [projectDialog, setProjectDialog] = useState<ProjectDialogState | null>(null);
-  const [draftState, setDraftState] = useState<ProjectFormData>({ title: '', description: '' });
+  const [draftState, setDraftState] = useState<CreateProjectFormData>({ title: '', description: '' });
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const selectedProject = useMemo(
@@ -128,7 +128,7 @@ export function ProjectManager({ isLoading = false }: ProjectManagerProps) {
       return;
     }
 
-    const projectData: ProjectFormData = {
+    const projectData: CreateProjectFormData = {
       title,
       description,
     };
