@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Project } from '../database/entities';
 import { getRecord, STORE_PROJECTS } from '../database/storage';
-import { createProject, type CreateProjectData } from './projects';
+import { createProject, updateProject, type CreateProjectData } from './projects';
 
 describe('projects repository', async () => {
   it('can create a new project from valid data', async () => {
@@ -45,5 +45,36 @@ describe('projects repository', async () => {
 
     expect(result.error.name).toBe('ProjectRepositoryError');
     expect(result.error.message).contain('Title is required');
+  });
+
+  it('can update existing project', async () => {
+    const originalProjectData = {
+      title: 'Project 1',
+      description: 'An initial project',
+    };
+
+    const newProjectData = {
+      title: 'Project #1',
+      description: 'Updated project',
+    };
+
+    const result = await createProject(originalProjectData);
+
+    if (!result.ok) {
+      throw new Error('Project creation failed.');
+    }
+
+    expect(result.value.title).toEqual(originalProjectData.title);
+    expect(result.value.description).toEqual(originalProjectData.description);
+
+    const updateResult = await updateProject(result.value.id, newProjectData);
+
+    if (!updateResult.ok) {
+      throw new Error('Failed to update project.');
+    }
+
+    expect(updateResult.value.title).toEqual(newProjectData.title);
+    expect(updateResult.value.description).toEqual(newProjectData.description);
+    expect(result.value.id).toEqual(updateResult.value.id);
   });
 });
