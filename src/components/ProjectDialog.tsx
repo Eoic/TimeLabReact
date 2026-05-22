@@ -1,3 +1,4 @@
+import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -9,16 +10,29 @@ import type { CreateProjectFormData } from '../forms/project';
 
 type ProjectDialogProps = {
   id: string;
+  errorMessage?: string;
   title: string;
   values: CreateProjectFormData;
   isOpen: boolean;
   onChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement>;
   onClose: VoidFunction;
+  onErrorClose?: VoidFunction;
   onExited: VoidFunction;
   onSave: VoidFunction;
 };
 
-export function ProjectDialog({ id, isOpen, onChange, onClose, onExited, onSave, title, values }: ProjectDialogProps) {
+export function ProjectDialog({
+  id,
+  errorMessage = '',
+  isOpen,
+  onChange,
+  onClose,
+  onErrorClose,
+  onExited,
+  onSave,
+  title,
+  values,
+}: ProjectDialogProps) {
   function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
     if (event.key !== 'Enter') {
       return;
@@ -49,6 +63,11 @@ export function ProjectDialog({ id, isOpen, onChange, onClose, onExited, onSave,
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
+          {errorMessage ? (
+            <Alert onClose={onErrorClose} severity="error">
+              {errorMessage}
+            </Alert>
+          ) : null}
           <TextField name="title" autoFocus fullWidth id={id} label="Title" onChange={onChange} value={values.title} />
           <TextField
             name="description"

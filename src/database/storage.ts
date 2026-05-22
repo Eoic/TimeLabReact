@@ -1,9 +1,9 @@
 import { StorageError } from './errors';
-import { type Result, ok, err } from '../shared/result';
+import { err, ok, type Result } from '../shared/result';
 
 export type IDBRecord = Record<string, unknown> & { id: string };
 
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const DB_NAME = 'timelab';
 export const STORE_PROJECTS = 'projects';
 
@@ -15,10 +15,10 @@ export function makeOpenDatabase(
   factory: IDBFactory,
   name: string,
   version: number,
-  stores: string[],
+  stores: readonly string[],
 ): () => Promise<IDBDatabase> {
-  return () => {
-    return new Promise((resolve, reject) => {
+  return () =>
+    new Promise((resolve, reject) => {
       const request = factory.open(name, version);
 
       request.onupgradeneeded = (): void => {
@@ -36,10 +36,9 @@ export function makeOpenDatabase(
       };
 
       request.onerror = (): void => {
-        reject(request.error ?? new Error(`Failed to open the database`));
+        reject(request.error ?? new Error('Failed to open the database'));
       };
     });
-  };
 }
 
 function _clearDatabaseCache(): void {
@@ -89,12 +88,27 @@ function _ensureStoreExists(database: IDBDatabase, storeName: string): Result<vo
   }
 
   const errorMessage = [
-    `Object store '${storeName}' was not found!`,
+    `Missing IndexedDB store "${storeName}".`,
     `Available stores: ${Array.from(database.objectStoreNames).join(', ')}`,
-    `Database version: ${database.version}`,
-  ].join('\n');
+  ].join(' ');
 
   return err(new StorageError(errorMessage));
+}
+
+function _waitForTransaction(transaction: IDBTransaction, fallbackMessage: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    transaction.oncomplete = (): void => {
+      resolve();
+    };
+
+    transaction.onerror = (): void => {
+      reject(transaction.error ?? new Error(fallbackMessage));
+    };
+
+    transaction.onabort = (): void => {
+      reject(transaction.error ?? new Error(fallbackMessage));
+    };
+  });
 }
 
 async function _fetch<T>(
@@ -103,6 +117,12 @@ async function _fetch<T>(
   storeAction: string,
   storeRequest: (store: IDBObjectStore) => IDBRequest,
 ) {
+  const storeResult = _ensureStoreExists(database, storeName);
+
+  if (!storeResult.ok) {
+    throw storeResult.error;
+  }
+
   return await new Promise<T>((resolve, reject) => {
     const transaction = database.transaction(storeName, 'readonly');
     const store = transaction.objectStore(storeName);
@@ -131,7 +151,7 @@ export async function getAllRecords<T extends IDBRecord>(storeName: string): Pro
 export async function getRecord<T extends IDBRecord>(id: string, storeName: string): Promise<Result<T, StorageError>> {
   try {
     const database = await _openDatabase();
-    const result = await _fetch<T>(database, storeName, 'getRecord()', (store) => store.get(id));
+    const result = await _fetch<T | undefined>(database, storeName, 'getRecord()', (store) => store.get(id));
 
     if (!result) {
       throw new Error('Record does not exist');
@@ -156,8 +176,10 @@ async function _saveRecord<T extends IDBRecord>(
       return storeResult;
     }
 
+    const transaction = database.transaction(storeName, 'readwrite');
+    const transactionFinished = _waitForTransaction(transaction, 'Failed to commit record.');
+
     await new Promise<void>((resolve, reject) => {
-      const transaction = database.transaction(storeName, 'readwrite');
       const store = transaction.objectStore(storeName);
       const request = storeAction(store, record);
 
@@ -170,6 +192,8 @@ async function _saveRecord<T extends IDBRecord>(
       };
     });
 
+    await transactionFinished;
+
     return ok(record);
   } catch (error) {
     return err(new StorageError('Failed to save record', error));
@@ -177,7 +201,7 @@ async function _saveRecord<T extends IDBRecord>(
 }
 
 export async function insertRecord<T extends IDBRecord>(record: T, storeName: string) {
-  return await _saveRecord(record, storeName, (store, record) => store.add(record));
+  return _saveRecord(record, storeName, (store, record) => store.add(record));
 }
 
 export async function updateRecord<T extends IDBRecord & { id: string }>(record: T, storeName: string) {
@@ -193,9 +217,16 @@ export async function updateRecord<T extends IDBRecord & { id: string }>(record:
 export async function deleteRecord(id: string, storeName: string): Promise<Result<void, StorageError>> {
   try {
     const database = await _openDatabase();
+    const storeResult = _ensureStoreExists(database, storeName);
+
+    if (!storeResult.ok) {
+      return storeResult;
+    }
+
+    const transaction = database.transaction(storeName, 'readwrite');
+    const transactionFinished = _waitForTransaction(transaction, `Failed to delete record with id=${id}.`);
 
     await new Promise<void>((resolve, reject) => {
-      const transaction = database.transaction(storeName, 'readwrite');
       const store = transaction.objectStore(storeName);
       const request = store.delete(id);
 
@@ -204,9 +235,11 @@ export async function deleteRecord(id: string, storeName: string): Promise<Resul
       };
 
       request.onerror = (): void => {
-        reject(request.error ?? new Error(`Failed to delete() record with id=${id}'`));
+        reject(request.error ?? new Error(`Failed to delete() record with id=${id}.`));
       };
     });
+
+    await transactionFinished;
 
     return ok(undefined);
   } catch (error) {

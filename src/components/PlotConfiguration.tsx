@@ -10,9 +10,37 @@ import type { SearchableDropdownOption } from './SearchableDropdown';
 type PlotAxis = 'amplitude' | 'sampleIndex' | 'time';
 type Downsampling = 'average' | 'lttb' | 'max' | 'none';
 
+type PlotConfigurationState = {
+  axes: {
+    x: PlotAxis;
+    y: PlotAxis;
+  };
+  appearance: {
+    downsampling: Downsampling;
+    isAreaFillEnabled: boolean;
+    isShowPointsEnabled: boolean;
+    isSmoothLineEnabled: boolean;
+    lineWidth: number;
+  };
+};
+
 type PlotConfigSectionProps = {
   children?: React.ReactNode;
   title: string;
+};
+
+const defaultPlotConfiguration: PlotConfigurationState = {
+  axes: {
+    x: 'time',
+    y: 'amplitude',
+  },
+  appearance: {
+    downsampling: 'none',
+    isAreaFillEnabled: true,
+    isShowPointsEnabled: false,
+    isSmoothLineEnabled: true,
+    lineWidth: 2,
+  },
 };
 
 const axisOptions: [SearchableDropdownOption<PlotAxis>, ...SearchableDropdownOption<PlotAxis>[]] = [
@@ -61,41 +89,68 @@ function PlotConfigSection({ children, title }: PlotConfigSectionProps) {
 }
 
 export function PlotConfiguration() {
-  const [xAxis, setXAxis] = useState<PlotAxis>('time');
-  const [yAxis, setYAxis] = useState<PlotAxis>('amplitude');
-  const [downsampling, setDownsampling] = useState<Downsampling>('none');
-  const [isSmoothLineEnabled, setIsSmoothLineEnabled] = useState(true);
-  const [isAreaFillEnabled, setIsAreaFillEnabled] = useState(true);
-  const [isShowPointsEnabled, setIsShowPointsEnabled] = useState(false);
-  const [lineWidth, setLineWidth] = useState(2);
+  const [configuration, setConfiguration] = useState<PlotConfigurationState>(defaultPlotConfiguration);
+
+  const updateAxis = (axis: keyof PlotConfigurationState['axes'], value: PlotAxis) => {
+    setConfiguration((currentConfiguration) => ({
+      ...currentConfiguration,
+      axes: {
+        ...currentConfiguration.axes,
+        [axis]: value,
+      },
+    }));
+  };
+
+  const updateAppearance = <TKey extends keyof PlotConfigurationState['appearance']>(
+    key: TKey,
+    value: PlotConfigurationState['appearance'][TKey],
+  ) => {
+    setConfiguration((currentConfiguration) => ({
+      ...currentConfiguration,
+      appearance: {
+        ...currentConfiguration.appearance,
+        [key]: value,
+      },
+    }));
+  };
 
   return (
     <Stack spacing={2}>
       <PlotConfigSection title="Axes">
         <Stack spacing={2}>
-          <SearchableDropdown label="X axis" onChange={setXAxis} options={axisOptions} value={xAxis} />
-          <SearchableDropdown label="Y axis" onChange={setYAxis} options={axisOptions} value={yAxis} />
+          <SearchableDropdown
+            label="X axis"
+            onChange={(value) => updateAxis('x', value)}
+            options={axisOptions}
+            value={configuration.axes.x}
+          />
+          <SearchableDropdown
+            label="Y axis"
+            onChange={(value) => updateAxis('y', value)}
+            options={axisOptions}
+            value={configuration.axes.y}
+          />
         </Stack>
       </PlotConfigSection>
 
       <PlotConfigSection title="Appearance">
         <Stack spacing={1.5}>
           <FormCheckbox
-            isChecked={isSmoothLineEnabled}
+            isChecked={configuration.appearance.isSmoothLineEnabled}
             label="Smooth line"
-            onChange={(isChecked) => setIsSmoothLineEnabled(isChecked)}
+            onChange={(isChecked) => updateAppearance('isSmoothLineEnabled', isChecked)}
           />
 
           <FormCheckbox
-            isChecked={isAreaFillEnabled}
+            isChecked={configuration.appearance.isAreaFillEnabled}
             label="Area fill"
-            onChange={(isChecked) => setIsAreaFillEnabled(isChecked)}
+            onChange={(isChecked) => updateAppearance('isAreaFillEnabled', isChecked)}
           />
 
           <FormCheckbox
-            isChecked={isShowPointsEnabled}
+            isChecked={configuration.appearance.isShowPointsEnabled}
             label="Show points"
-            onChange={(isChecked) => setIsShowPointsEnabled(isChecked)}
+            onChange={(isChecked) => updateAppearance('isShowPointsEnabled', isChecked)}
           />
 
           <Box>
@@ -111,7 +166,7 @@ export function PlotConfiguration() {
                 Line width
               </Typography>
               <Typography color="text.secondary" variant="caption">
-                {lineWidth}px
+                {configuration.appearance.lineWidth}px
               </Typography>
             </Box>
 
@@ -119,18 +174,20 @@ export function PlotConfiguration() {
               aria-labelledby="line-width-slider-label"
               max={8}
               min={1}
-              onChange={(_event, nextValue) => setLineWidth(Array.isArray(nextValue) ? nextValue[0] : nextValue)}
+              onChange={(_event, nextValue) =>
+                updateAppearance('lineWidth', Array.isArray(nextValue) ? (nextValue[0] ?? 1) : nextValue)
+              }
               step={0.5}
-              value={lineWidth}
+              value={configuration.appearance.lineWidth}
               valueLabelDisplay="auto"
             />
           </Box>
 
           <SearchableDropdown
             label="Downsampling"
-            onChange={(value) => setDownsampling(value)}
+            onChange={(value) => updateAppearance('downsampling', value)}
             options={downsamplingOptions}
-            value={downsampling}
+            value={configuration.appearance.downsampling}
           />
         </Stack>
       </PlotConfigSection>

@@ -131,6 +131,44 @@ describe('ProjectManager', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Failed to create project.');
   });
 
+  it('keeps the project dialog open when create fails', async () => {
+    const user = userEvent.setup();
+    render(<ProjectManager />);
+
+    await user.click(await screen.findByRole('button', { name: 'Untitled' }));
+    await user.click(screen.getByRole('menuitem', { name: 'New project' }));
+    await user.type(screen.getByLabelText('Title'), 'Client work');
+
+    vi.spyOn(FakeIDBObjectStore.prototype, 'add').mockImplementationOnce(() => makeFailingRequest(null));
+
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Failed to create project.');
+    expect(screen.getByRole('heading', { name: 'New project' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Title')).toHaveValue('Client work');
+  });
+
+  it('keeps the delete dialog open when delete fails', async () => {
+    const user = userEvent.setup();
+    render(<ProjectManager />);
+
+    await user.click(await screen.findByRole('button', { name: 'Untitled' }));
+    await user.click(screen.getByRole('menuitem', { name: 'New project' }));
+    await user.type(screen.getByLabelText('Title'), 'Client work');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await user.click(await screen.findByRole('button', { name: 'Client work' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Delete project' }));
+
+    vi.spyOn(FakeIDBObjectStore.prototype, 'delete').mockImplementationOnce(() => makeFailingRequest(null));
+
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Failed to delete project');
+    expect(screen.getByRole('heading', { name: 'Delete project' })).toBeInTheDocument();
+    expect(screen.getByText('Delete Client work? This removes the project from this session.')).toBeInTheDocument();
+  });
+
   it('keeps project error text visible while the snackbar closes', async () => {
     const user = userEvent.setup();
     render(<ProjectManager />);
@@ -145,6 +183,6 @@ describe('ProjectManager', () => {
     await screen.findByRole('alert');
     await user.click(screen.getByRole('button', { name: 'Close' }));
 
-    expect(screen.getByText('Failed to create project.')).toBeInTheDocument();
+    expect(screen.getAllByText('Failed to create project.')).not.toHaveLength(0);
   });
 });

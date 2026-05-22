@@ -96,10 +96,11 @@ describe('storage', () => {
   });
 
   it('returns an error when saving to an unknown store', async () => {
-    const error = unwrapErr(await insertRecord({ id: 'project-1' }, 'missing-store'));
+    const storeName = 'missing-store';
+    const error = unwrapErr(await insertRecord({ id: 'project-1' }, storeName));
 
     expect(error.name).toBe('StorageError');
-    expect(error.message).toContain("Object store 'missing-store' was not found!");
+    expect(error.message).toContain(`Missing IndexedDB store "${storeName}"`);
   });
 
   it('returns an error when getting a single record from unknown store', async () => {
@@ -156,7 +157,7 @@ describe('storage', () => {
 
     expect(error.name).toBe('StorageError');
     expect(error.message).toBe('Failed to delete record with id=project-1');
-    expect(error.cause).toEqual(new Error("Failed to delete() record with id=project-1'"));
+    expect(error.cause).toEqual(new Error('Failed to delete() record with id=project-1.'));
   });
 });
 

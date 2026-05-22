@@ -76,6 +76,13 @@ describe('projects repository', async () => {
     expect(allProjects.find((project) => project.id === secondProject.id)?.isSelected).toBe(true);
   });
 
+  it('fails to select a missing project', async () => {
+    const error = unwrapErr(await setSelectedProject('missing-project'));
+
+    expect(error.name).toBe('ProjectRepositoryError');
+    expect(error.message).contain('Cannot select missing project');
+  });
+
   it('can delete selected project and select a remaining project', async () => {
     const firstProject = unwrapOk(await createProject({ title: 'Project #1', description: 'An example project' }));
     const secondProject = unwrapOk(await createProject({ title: 'Project #2', description: 'An example project' }));
@@ -91,6 +98,19 @@ describe('projects repository', async () => {
       id: firstProject.id,
       isSelected: true,
     });
+  });
+
+  it('does not delete the final project', async () => {
+    const project = unwrapOk(await createProject({ title: 'Project #1', description: 'An example project' }));
+    unwrapOk(await setSelectedProject(project.id));
+
+    const error = unwrapErr(await deleteProject(project.id));
+    const allProjects = unwrapOk(await getAllProjects());
+
+    expect(error.name).toBe('ProjectRepositoryError');
+    expect(error.message).contain('Cannot delete the last project');
+    expect(allProjects).toHaveLength(1);
+    expect(allProjects[0]?.id).toBe(project.id);
   });
 
   it('fails gracefully when deleting project that does not exist', async () => {

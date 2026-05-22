@@ -36,13 +36,11 @@ export async function bootstrap(): Promise<Result<void, ProjectRepositoryError>>
     return err(new ProjectRepositoryError('Failed while fetching projects', projectsResult.error));
   }
 
-  const selectedProject = projectsResult.value.find((project) => project.isSelected) ?? null;
-
-  if (selectedProject) {
+  if (projectsResult.value.some((project) => project.isSelected)) {
     return ok(undefined);
   }
 
-  const projectToSelect = projectsResult.value[0] ?? null;
+  const projectToSelect = projectsResult.value[0];
 
   if (projectToSelect) {
     return setSelectedProject(projectToSelect.id);
@@ -89,12 +87,13 @@ export async function setSelectedProject(id: string): Promise<Result<void, Proje
   }
 
   for (const project of projects.value) {
-    const selectedProject: Project = {
-      ...project,
-      isSelected: project.id === id,
-    };
-
-    const updateResult = await updateRecord(selectedProject, STORE_PROJECTS);
+    const updateResult = await updateRecord(
+      {
+        ...project,
+        isSelected: project.id === id,
+      },
+      STORE_PROJECTS,
+    );
 
     if (!updateResult.ok) {
       return err(new ProjectRepositoryError('Failed to select project', updateResult.error));
@@ -126,7 +125,7 @@ export async function createProject(data: CreateProjectData): Promise<Result<Pro
     return err(new ProjectRepositoryError('Failed to create project.', result.error));
   }
 
-  return result;
+  return ok(result.value);
 }
 
 export async function updateProject(
@@ -171,10 +170,10 @@ export async function deleteProject(id: string): Promise<Result<{ deleted: boole
   const allProjects = await getAllProjects();
 
   if (!allProjects.ok) {
-    return err(new ProjectRepositoryError('Failed to fetch projects', allProjects.error));
+    return err(new ProjectRepositoryError('Failed to delete project', allProjects.error));
   }
 
-  const remainingProjects = allProjects.value.filter((candidate) => candidate.id !== id);
+  const remainingProjects = allProjects.value.filter((project) => project.id !== id);
 
   if (remainingProjects.length === 0) {
     return err(new ProjectRepositoryError('Cannot delete the last project.'));
@@ -187,7 +186,7 @@ export async function deleteProject(id: string): Promise<Result<{ deleted: boole
   }
 
   if (project.value.isSelected) {
-    const selectResult = await setSelectedProject(remainingProjects[0].id);
+    const selectResult = await setSelectedProject(remainingProjects[0]?.id ?? '');
 
     if (!selectResult.ok) {
       return err(new ProjectRepositoryError('Failed to select replacement project', selectResult.error));
