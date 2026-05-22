@@ -7,6 +7,10 @@ const DB_VERSION = 1;
 const DB_NAME = 'timelab';
 export const STORE_PROJECTS = 'projects';
 
+let cachedFactory: IDBFactory | null = null;
+let cachedDatabase: IDBDatabase | null = null;
+let cachedDatabasePromise: Promise<IDBDatabase> | null = null;
+
 export function makeOpenDatabase(
   factory: IDBFactory,
   name: string,
@@ -38,8 +42,45 @@ export function makeOpenDatabase(
   };
 }
 
-function _openDatabase() {
-  return makeOpenDatabase(globalThis.indexedDB, DB_NAME, DB_VERSION, [STORE_PROJECTS])();
+function _clearDatabaseCache(): void {
+  const database = cachedDatabase;
+  const databasePromise = cachedDatabasePromise;
+
+  cachedFactory = null;
+  cachedDatabase = null;
+  cachedDatabasePromise = null;
+
+  database?.close();
+
+  if (!database) {
+    void databasePromise?.then((database) => database.close()).catch(() => undefined);
+  }
+}
+
+function _openDatabase(): Promise<IDBDatabase> {
+  const factory = globalThis.indexedDB;
+
+  if (cachedFactory !== factory) {
+    _clearDatabaseCache();
+    cachedFactory = factory;
+  }
+
+  cachedDatabasePromise ??= makeOpenDatabase(factory, DB_NAME, DB_VERSION, [STORE_PROJECTS])()
+    .then((database) => {
+      cachedDatabase = database;
+
+      database.onversionchange = (): void => {
+        _clearDatabaseCache();
+      };
+
+      return database;
+    })
+    .catch((error: unknown) => {
+      _clearDatabaseCache();
+      throw error;
+    });
+
+  return cachedDatabasePromise;
 }
 
 function _ensureStoreExists(database: IDBDatabase, storeName: string): Result<void, StorageError> {

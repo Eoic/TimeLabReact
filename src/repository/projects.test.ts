@@ -73,4 +73,9 @@ describe('projects repository', async () => {
     expect(deleteResult.deleted).toBe(true);
     expect(unwrapOk(await getAllProjects()).length).toBe(0);
   });
+
+  it('fails gracefully when deleting project that does not exist', async () => {
+    const result = unwrapErr(await deleteProject('some-project-id-1'));
+    expect(result.message).toContain('Failed to delete project');
+  });
 });

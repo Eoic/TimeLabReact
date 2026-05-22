@@ -39,6 +39,25 @@ afterEach(() => {
 });
 
 describe('storage', () => {
+  it('reuses the cached database connection across storage calls', async () => {
+    const openSpy = vi.spyOn(globalThis.indexedDB, 'open');
+    const record: Project = {
+      id: 'project-1',
+      title: 'Client work',
+      description: 'An example description',
+      createdAt: Date.now(),
+      updatedAt: null,
+      isArchived: false,
+      isDefault: true,
+    };
+
+    unwrapOk(await insertRecord(record, STORE_PROJECTS));
+    unwrapOk(await getRecord<Project>(record.id, STORE_PROJECTS));
+    unwrapOk(await getAllRecords<Project>(STORE_PROJECTS));
+
+    expect(openSpy).toHaveBeenCalledTimes(1);
+  });
+
   it('saves and reads records from IndexedDB', async () => {
     const record: Project = {
       id: 'project-1',
