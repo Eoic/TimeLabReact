@@ -128,7 +128,7 @@ export function WorkspaceLayout() {
           xs: '"center" "data" "inspector"',
         },
         gridTemplateColumns: {
-          lg: '300px minmax(600px, 1fr) 300px',
+          lg: '315px minmax(600px, 1fr) 315px',
           xs: 'minmax(0, 1fr)',
         },
         gridTemplateRows: {

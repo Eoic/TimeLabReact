@@ -22,7 +22,7 @@ describe('ProjectDialog', () => {
     render(<ProjectDialog {...defaultProps} />);
 
     expect(screen.getByRole('heading', { name: 'New project' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Title')).toHaveValue('Client work');
+    expect(screen.getByLabelText(/^Title/)).toHaveValue('Client work');
   });
 
   it('disables save when the project name is blank', () => {
@@ -35,7 +35,7 @@ describe('ProjectDialog', () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(<ProjectDialog {...defaultProps} onChange={onChange} values={{ title: '', description: '' }} />);
-    await user.type(screen.getByLabelText('Title'), 'Roadmap');
+    await user.type(screen.getByLabelText(/^Title/), 'Roadmap');
 
     expect(onChange).toHaveBeenCalled();
   });
@@ -55,7 +55,7 @@ describe('ProjectDialog', () => {
     render(<ProjectDialog {...defaultProps} onSave={onSave} />);
     await user.keyboard('{Enter>}{/Enter}');
 
-    expect(screen.getByLabelText('Title')).toHaveFocus();
+    expect(screen.getByLabelText(/^Title/)).toHaveFocus();
     expect(onSave).toHaveBeenCalledTimes(1);
   });
 });

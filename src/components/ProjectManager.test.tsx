@@ -40,7 +40,7 @@ describe('ProjectManager', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Untitled' }));
     await user.click(screen.getByRole('menuitem', { name: 'New project' }));
-    await user.type(screen.getByLabelText('Title'), 'Client work');
+    await user.type(screen.getByLabelText(/^Title/), 'Client work');
     await user.type(screen.getByLabelText('Description'), 'Monthly reporting');
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
@@ -53,7 +53,7 @@ describe('ProjectManager', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Untitled' }));
     await user.click(screen.getByRole('menuitem', { name: 'New project' }));
-    await user.type(screen.getByLabelText('Title'), 'Client work');
+    await user.type(screen.getByLabelText(/^Title/), 'Client work');
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     await user.click(await screen.findByRole('button', { name: 'Client work' }));
@@ -69,7 +69,7 @@ describe('ProjectManager', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Untitled' }));
     await user.click(screen.getByRole('menuitem', { name: 'New project' }));
-    await user.type(screen.getByLabelText('Title'), 'Client work');
+    await user.type(screen.getByLabelText(/^Title/), 'Client work');
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     await user.click(await screen.findByRole('button', { name: 'Client work' }));
@@ -84,13 +84,13 @@ describe('ProjectManager', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Untitled' }));
     await user.click(screen.getByRole('menuitem', { name: 'New project' }));
-    await user.type(screen.getByLabelText('Title'), 'Client work');
+    await user.type(screen.getByLabelText(/^Title/), 'Client work');
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     await user.click(await screen.findByRole('button', { name: 'Client work' }));
     await user.click(screen.getByRole('menuitem', { name: 'Rename project' }));
-    await user.clear(screen.getByLabelText('Title'));
-    await user.type(screen.getByLabelText('Title'), 'Research');
+    await user.clear(screen.getByLabelText(/^Title/));
+    await user.type(screen.getByLabelText(/^Title/), 'Research');
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     expect(await screen.findByRole('button', { name: 'Research' })).toBeInTheDocument();
@@ -102,7 +102,7 @@ describe('ProjectManager', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Untitled' }));
     await user.click(screen.getByRole('menuitem', { name: 'New project' }));
-    await user.type(screen.getByLabelText('Title'), 'Client work');
+    await user.type(screen.getByLabelText(/^Title/), 'Client work');
     await user.click(screen.getByRole('button', { name: 'Save' }));
     await screen.findByRole('button', { name: 'Client work' });
 
@@ -122,7 +122,7 @@ describe('ProjectManager', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Untitled' }));
     await user.click(screen.getByRole('menuitem', { name: 'New project' }));
-    await user.type(screen.getByLabelText('Title'), 'Client work');
+    await user.type(screen.getByLabelText(/^Title/), 'Client work');
 
     vi.spyOn(FakeIDBObjectStore.prototype, 'add').mockImplementationOnce(() => makeFailingRequest(null));
 
@@ -137,7 +137,7 @@ describe('ProjectManager', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Untitled' }));
     await user.click(screen.getByRole('menuitem', { name: 'New project' }));
-    await user.type(screen.getByLabelText('Title'), 'Client work');
+    await user.type(screen.getByLabelText(/^Title/), 'Client work');
 
     vi.spyOn(FakeIDBObjectStore.prototype, 'add').mockImplementationOnce(() => makeFailingRequest(null));
 
@@ -145,7 +145,7 @@ describe('ProjectManager', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Failed to create project.');
     expect(screen.getByRole('heading', { name: 'New project' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Title')).toHaveValue('Client work');
+    expect(screen.getByLabelText(/^Title/)).toHaveValue('Client work');
   });
 
   it('keeps the delete dialog open when delete fails', async () => {
@@ -154,7 +154,7 @@ describe('ProjectManager', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Untitled' }));
     await user.click(screen.getByRole('menuitem', { name: 'New project' }));
-    await user.type(screen.getByLabelText('Title'), 'Client work');
+    await user.type(screen.getByLabelText(/^Title/), 'Client work');
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     await user.click(await screen.findByRole('button', { name: 'Client work' }));
@@ -175,7 +175,7 @@ describe('ProjectManager', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Untitled' }));
     await user.click(screen.getByRole('menuitem', { name: 'New project' }));
-    await user.type(screen.getByLabelText('Title'), 'Client work');
+    await user.type(screen.getByLabelText(/^Title/), 'Client work');
 
     vi.spyOn(FakeIDBObjectStore.prototype, 'add').mockImplementationOnce(() => makeFailingRequest(null));
 

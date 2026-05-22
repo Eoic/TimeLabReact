@@ -1,26 +1,47 @@
+import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
+import MenuItem from '@mui/material/MenuItem';
 import Slider from '@mui/material/Slider';
 import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { FormCheckbox } from './FormCheckbox';
+import { MaterialSymbol } from './MaterialSymbol';
 import { SearchableDropdown } from './SearchableDropdown';
 import type { SearchableDropdownOption } from './SearchableDropdown';
 
 type PlotAxis = 'amplitude' | 'sampleIndex' | 'time';
 type Downsampling = 'average' | 'lttb' | 'max' | 'none';
 
+type Threshold = {
+  id: string;
+  axis: 'x' | 'y';
+  value: number;
+  color: string;
+  label: string;
+  style: 'solid' | 'dashed';
+};
+
 type PlotConfigurationState = {
   axes: {
     x: PlotAxis;
     y: PlotAxis;
   };
+
   appearance: {
     downsampling: Downsampling;
     isAreaFillEnabled: boolean;
     isShowPointsEnabled: boolean;
     isSmoothLineEnabled: boolean;
+    isShowGridlinesEnabled: boolean;
     lineWidth: number;
+  };
+
+  guides: {
+    thresholds: Threshold[];
   };
 };
 
@@ -29,17 +50,39 @@ type PlotConfigSectionProps = {
   title: string;
 };
 
+type UpdateThreshold = <TKey extends keyof Threshold>(id: string, key: TKey, value: Threshold[TKey]) => void;
+
+type ThresholdEditorProps = {
+  index: number;
+  onRemove: (id: string) => void;
+  onUpdate: UpdateThreshold;
+  threshold: Threshold;
+};
+
+type ColorFieldProps = {
+  label: string;
+  name: string;
+  onChange: (value: string) => void;
+  value: string;
+};
+
 const defaultPlotConfiguration: PlotConfigurationState = {
   axes: {
     x: 'time',
     y: 'amplitude',
   },
+
   appearance: {
     downsampling: 'none',
     isAreaFillEnabled: true,
-    isShowPointsEnabled: false,
+    isShowPointsEnabled: true,
     isSmoothLineEnabled: true,
+    isShowGridlinesEnabled: true,
     lineWidth: 2,
+  },
+
+  guides: {
+    thresholds: [],
   },
 };
 
@@ -77,6 +120,36 @@ const downsamplingOptions: [SearchableDropdownOption<Downsampling>, ...Searchabl
   },
 ];
 
+const thresholdAxisOptions: [
+  SearchableDropdownOption<Threshold['axis']>,
+  ...SearchableDropdownOption<Threshold['axis']>[],
+] = [
+  {
+    label: 'X axis',
+    value: 'x',
+  },
+  {
+    label: 'Y axis',
+    value: 'y',
+  },
+];
+
+const thresholdStyleOptions: [
+  SearchableDropdownOption<Threshold['style']>,
+  ...SearchableDropdownOption<Threshold['style']>[],
+] = [
+  {
+    label: 'Solid',
+    value: 'solid',
+  },
+  {
+    label: 'Dashed',
+    value: 'dashed',
+  },
+];
+
+const hexColorPattern = /^#[\da-f]{6}$/i;
+
 function PlotConfigSection({ children, title }: PlotConfigSectionProps) {
   return (
     <Box component="section" sx={{ px: 0 }}>
@@ -88,7 +161,219 @@ function PlotConfigSection({ children, title }: PlotConfigSectionProps) {
   );
 }
 
+function ColorField({ label, name, onChange, value }: ColorFieldProps) {
+  const pickerInputRef = useRef<HTMLInputElement>(null);
+  const [draft, setDraft] = useState(value);
+  const trimmedDraft = draft.trim();
+  const swatchColor = hexColorPattern.test(trimmedDraft) ? trimmedDraft : value;
+
+  const commitDraft = () => {
+    if (!hexColorPattern.test(trimmedDraft)) {
+      setDraft(value);
+      return;
+    }
+
+    const nextValue = trimmedDraft.toLowerCase();
+    setDraft(nextValue);
+
+    if (nextValue !== value) {
+      onChange(nextValue);
+    }
+  };
+
+  const openPicker = () => {
+    pickerInputRef.current?.click();
+  };
+
+  return (
+    <Box sx={{ flex: 1, minWidth: 0, position: 'relative' }}>
+      <TextField
+        fullWidth
+        label={label}
+        onBlur={commitDraft}
+        onChange={(event) => setDraft(event.target.value)}
+        size="small"
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start" sx={{ mr: 1 }}>
+                <Box
+                  aria-label={`Pick ${name} color`}
+                  component="button"
+                  onClick={openPicker}
+                  sx={{
+                    alignItems: 'center',
+                    bgcolor: 'transparent',
+                    border: 0,
+                    borderRadius: 0.5,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    height: 24,
+                    justifyContent: 'left',
+                    p: 0,
+                    width: 16,
+                    '&:focus-visible': {
+                      outline: (theme) => `2px solid ${theme.palette.primary.main}`,
+                      outlineOffset: 2,
+                    },
+                  }}
+                  type="button"
+                >
+                  <Box
+                    aria-hidden
+                    sx={{
+                      bgcolor: swatchColor,
+                      border: 1,
+                      borderColor: 'divider',
+                      borderRadius: 0.5,
+                      height: 16,
+                      width: 16,
+                    }}
+                  />
+                </Box>
+              </InputAdornment>
+            ),
+          },
+        }}
+        value={draft}
+      />
+      <Box
+        aria-label={`${name} color picker`}
+        component="input"
+        onChange={(event) => {
+          setDraft(event.target.value);
+          onChange(event.target.value);
+        }}
+        ref={pickerInputRef}
+        sx={{
+          height: 1,
+          left: 0,
+          opacity: 0,
+          pointerEvents: 'none',
+          position: 'absolute',
+          top: 0,
+          width: 1,
+        }}
+        tabIndex={-1}
+        type="color"
+        value={swatchColor}
+      />
+    </Box>
+  );
+}
+
+function ThresholdEditor({ index, onRemove, onUpdate, threshold }: ThresholdEditorProps) {
+  const [labelDraft, setLabelDraft] = useState(threshold.label);
+  const [valueDraft, setValueDraft] = useState(String(threshold.value));
+  const thresholdName = labelDraft.trim() || `Threshold ${index + 1}`;
+
+  const commitLabel = () => {
+    if (labelDraft !== threshold.label) {
+      onUpdate(threshold.id, 'label', labelDraft);
+    }
+  };
+
+  const commitValue = () => {
+    const nextValue = Number(valueDraft);
+
+    if (!valueDraft.trim() || !Number.isFinite(nextValue)) {
+      setValueDraft(String(threshold.value));
+      return;
+    }
+
+    if (nextValue !== threshold.value) {
+      onUpdate(threshold.id, 'value', nextValue);
+    }
+  };
+
+  return (
+    <Box
+      component="article"
+      sx={{
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 1,
+        p: 1,
+      }}
+    >
+      <Stack spacing={1}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+          <TextField
+            fullWidth
+            label="Label"
+            onBlur={commitLabel}
+            onChange={(event) => setLabelDraft(event.target.value)}
+            size="small"
+            value={labelDraft}
+          />
+          <IconButton aria-label={`Remove ${thresholdName}`} onClick={() => onRemove(threshold.id)} size="small">
+            <MaterialSymbol name="delete" />
+          </IconButton>
+        </Stack>
+
+        <Stack direction="row" spacing={1}>
+          <TextField
+            fullWidth
+            label="Axis"
+            onChange={(event) => onUpdate(threshold.id, 'axis', event.target.value as Threshold['axis'])}
+            select
+            size="small"
+            value={threshold.axis}
+          >
+            {thresholdAxisOptions.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            fullWidth
+            label="Value"
+            onBlur={commitValue}
+            onChange={(event) => setValueDraft(event.target.value)}
+            size="small"
+            type="number"
+            value={valueDraft}
+          />
+        </Stack>
+
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{
+            '& > *': {
+              flex: 1,
+              minWidth: 0,
+            },
+          }}
+        >
+          <TextField
+            label="Style"
+            onChange={(event) => onUpdate(threshold.id, 'style', event.target.value as Threshold['style'])}
+            select
+            size="small"
+            value={threshold.style}
+          >
+            {thresholdStyleOptions.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </TextField>
+          <ColorField
+            label="Color"
+            name={thresholdName}
+            onChange={(value) => onUpdate(threshold.id, 'color', value)}
+            value={threshold.color}
+          />
+        </Stack>
+      </Stack>
+    </Box>
+  );
+}
+
 export function PlotConfiguration() {
+  const nextThresholdId = useRef(1);
   const [configuration, setConfiguration] = useState<PlotConfigurationState>(defaultPlotConfiguration);
 
   const updateAxis = (axis: keyof PlotConfigurationState['axes'], value: PlotAxis) => {
@@ -110,6 +395,55 @@ export function PlotConfiguration() {
       appearance: {
         ...currentConfiguration.appearance,
         [key]: value,
+      },
+    }));
+  };
+
+  const addThreshold = () => {
+    const thresholdNumber = nextThresholdId.current++;
+
+    setConfiguration((currentConfiguration) => ({
+      ...currentConfiguration,
+      guides: {
+        ...currentConfiguration.guides,
+        thresholds: [
+          ...currentConfiguration.guides.thresholds,
+          {
+            id: `threshold-${thresholdNumber}`,
+            axis: 'y',
+            value: 0,
+            color: '#8ea2ff',
+            label: `Threshold ${thresholdNumber}`,
+            style: 'solid',
+          },
+        ],
+      },
+    }));
+  };
+
+  const updateThreshold: UpdateThreshold = (id, key, value) => {
+    setConfiguration((currentConfiguration) => ({
+      ...currentConfiguration,
+      guides: {
+        ...currentConfiguration.guides,
+        thresholds: currentConfiguration.guides.thresholds.map((threshold) =>
+          threshold.id === id
+            ? {
+                ...threshold,
+                [key]: value,
+              }
+            : threshold,
+        ),
+      },
+    }));
+  };
+
+  const removeThreshold = (id: string) => {
+    setConfiguration((currentConfiguration) => ({
+      ...currentConfiguration,
+      guides: {
+        ...currentConfiguration.guides,
+        thresholds: currentConfiguration.guides.thresholds.filter((threshold) => threshold.id !== id),
       },
     }));
   };
@@ -153,6 +487,12 @@ export function PlotConfiguration() {
             onChange={(isChecked) => updateAppearance('isShowPointsEnabled', isChecked)}
           />
 
+          <FormCheckbox
+            isChecked={configuration.appearance.isShowGridlinesEnabled}
+            label="Show gridlines"
+            onChange={(isChecked) => updateAppearance('isShowGridlinesEnabled', isChecked)}
+          />
+
           <Box>
             <Box
               sx={{
@@ -192,7 +532,33 @@ export function PlotConfiguration() {
         </Stack>
       </PlotConfigSection>
 
-      <PlotConfigSection title="Guides" />
+      <PlotConfigSection title="Guides">
+        <Stack spacing={1}>
+          <Button
+            fullWidth
+            onClick={addThreshold}
+            size="small"
+            startIcon={<MaterialSymbol name="add" />}
+            variant="outlined"
+          >
+            Add threshold
+          </Button>
+
+          {configuration.guides.thresholds.length !== 0 && (
+            <Stack spacing={1}>
+              {configuration.guides.thresholds.map((threshold, index) => (
+                <ThresholdEditor
+                  index={index}
+                  key={threshold.id}
+                  onRemove={removeThreshold}
+                  onUpdate={updateThreshold}
+                  threshold={threshold}
+                />
+              ))}
+            </Stack>
+          )}
+        </Stack>
+      </PlotConfigSection>
     </Stack>
   );
 }
