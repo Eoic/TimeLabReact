@@ -1,3 +1,4 @@
+import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Dialog from '@mui/material/Dialog';
@@ -8,18 +9,15 @@ import DialogTitle from '@mui/material/DialogTitle';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
+import Snackbar from '@mui/material/Snackbar';
 import Typography from '@mui/material/Typography';
 import { useId, useMemo, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { MaterialSymbol } from './MaterialSymbol';
 import { ProjectDialog } from './ProjectDialog';
+import type { Project } from '../database/entities';
 import type { CreateProjectFormData } from '../forms/project';
-
-type Project = {
-  id: string;
-  title: string;
-  description: string;
-};
+import { useProjects } from '../hooks/useProjects';
 
 type ProjectDialogMode = 'create' | 'rename';
 
@@ -29,39 +27,72 @@ type ProjectDialogState = {
   mode: ProjectDialogMode;
 };
 
-type ProjectManagerProps = {
-  isLoading?: boolean;
+type ErrorSnackbarState = {
+  isOpen: boolean;
+  message: string | null;
 };
 
-const defaultProject: Project = {
-  id: 'default',
-  title: 'Untitled',
-  description: '',
+type DeleteDialogState = {
+  isOpen: boolean;
+  project: Project | null;
 };
 
-export function ProjectManager({ isLoading = false }: ProjectManagerProps) {
+function getErrorMessage(error: unknown, fallbackMessage: string): string {
+  return error instanceof Error && error.message ? error.message : fallbackMessage;
+}
+
+export function ProjectManager() {
   const nameInputId = useId();
-  const [projects, setProjects] = useState<Project[]>([defaultProject]);
-  const [selectedProjectId, setSelectedProjectId] = useState(defaultProject.id);
+  const projects = useProjects();
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
   const [projectDialog, setProjectDialog] = useState<ProjectDialogState | null>(null);
   const [draftState, setDraftState] = useState<CreateProjectFormData>({ title: '', description: '' });
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState<DeleteDialogState>({ isOpen: false, project: null });
+  const [errorSnackbar, setErrorSnackbar] = useState<ErrorSnackbarState>({
+    isOpen: false,
+    message: null,
+  });
 
-  const selectedProject = useMemo(
-    () => projects.find((project) => project.id === selectedProjectId) ?? defaultProject,
-    [projects, selectedProjectId],
-  );
+  const selectedProject = useMemo(() => {
+    if (projects.isLoading) {
+      return null;
+    }
 
-  const canDeleteSelectedProject = projects.length > 1;
-  const isProjectMenuOpen = !isLoading && Boolean(anchorElement);
+    const availableProjects = projects.data ?? [];
+
+    return availableProjects.find((project) => project.isSelected) ?? availableProjects[0] ?? null;
+  }, [projects.data, projects.isLoading]);
+
+  const canDeleteSelectedProject = Boolean(selectedProject && (projects.data?.length ?? 0) > 1);
+  const isProjectMenuOpen = !projects.isLoading && Boolean(anchorElement);
+
+  const showError = (error: unknown, fallbackMessage: string) => {
+    setErrorSnackbar({
+      isOpen: true,
+      message: getErrorMessage(error, fallbackMessage),
+    });
+  };
+
+  const closeErrorSnackbar = () => {
+    setErrorSnackbar((currentSnackbar) => ({
+      ...currentSnackbar,
+      isOpen: false,
+    }));
+  };
+
+  const resetErrorSnackbar = () => {
+    setErrorSnackbar((currentSnackbar) => ({
+      ...currentSnackbar,
+      message: null,
+    }));
+  };
 
   const closeProjectMenu = () => {
     setAnchorElement(null);
   };
 
   const openProjectMenu = (event: MouseEvent<HTMLButtonElement>) => {
-    if (isLoading) {
+    if (projects.isLoading) {
       return;
     }
 
@@ -81,6 +112,10 @@ export function ProjectManager({ isLoading = false }: ProjectManagerProps) {
   };
 
   const openRenameDialog = () => {
+    if (!selectedProject) {
+      return;
+    }
+
     setDraftState({
       title: selectedProject.title,
       description: selectedProject.description,
@@ -96,7 +131,14 @@ export function ProjectManager({ isLoading = false }: ProjectManagerProps) {
   };
 
   const openDeleteDialog = () => {
-    setIsDeleteDialogOpen(true);
+    if (!canDeleteSelectedProject || !selectedProject) {
+      return;
+    }
+
+    setDeleteDialog({
+      isOpen: true,
+      project: selectedProject,
+    });
     closeProjectMenu();
   };
 
@@ -114,6 +156,20 @@ export function ProjectManager({ isLoading = false }: ProjectManagerProps) {
   const resetProjectDialog = () => {
     setProjectDialog(null);
     setDraftState({ title: '', description: '' });
+  };
+
+  const closeDeleteDialog = () => {
+    setDeleteDialog((currentDialog) => ({
+      ...currentDialog,
+      isOpen: false,
+    }));
+  };
+
+  const resetDeleteDialog = () => {
+    setDeleteDialog((currentDialog) => ({
+      ...currentDialog,
+      project: null,
+    }));
   };
 
   const saveProjectDialog = () => {
@@ -135,21 +191,20 @@ export function ProjectManager({ isLoading = false }: ProjectManagerProps) {
 
     switch (projectDialog.mode) {
       case 'create': {
-        const newProject = {
-          id: crypto.randomUUID(),
-          ...projectData,
-        };
+        void projects.createProject(projectData).catch((error) => {
+          showError(error, 'Failed to create project.');
+        });
 
-        setProjects((currentProjects) => [...currentProjects, newProject]);
-        setSelectedProjectId(newProject.id);
         break;
       }
       case 'rename': {
-        setProjects((currentProjects) =>
-          currentProjects.map((project) =>
-            project.id === selectedProject.id ? { ...project, ...projectData } : project,
-          ),
-        );
+        if (!selectedProject) {
+          break;
+        }
+
+        void projects.updateProject(selectedProject.id, projectData).catch((error) => {
+          showError(error, 'Failed to rename project.');
+        });
 
         break;
       }
@@ -161,18 +216,20 @@ export function ProjectManager({ isLoading = false }: ProjectManagerProps) {
   };
 
   const deleteSelectedProject = () => {
-    if (!canDeleteSelectedProject) {
+    if (!deleteDialog.project) {
       return;
     }
 
-    setProjects((currentProjects) => {
-      const nextProjects = currentProjects.filter((project) => project.id !== selectedProject.id);
-      setSelectedProjectId(nextProjects[0]?.id ?? defaultProject.id);
-
-      return nextProjects.length > 0 ? nextProjects : [defaultProject];
-    });
-
-    setIsDeleteDialogOpen(false);
+    void projects
+      .deleteProject(deleteDialog.project.id)
+      .then((deleted) => {
+        if (deleted) {
+          closeDeleteDialog();
+        }
+      })
+      .catch((error) => {
+        showError(error, 'Failed to delete project.');
+      });
   };
 
   return (
@@ -181,13 +238,15 @@ export function ProjectManager({ isLoading = false }: ProjectManagerProps) {
         aria-controls={isProjectMenuOpen ? 'project-manager-menu' : undefined}
         aria-expanded={isProjectMenuOpen ? 'true' : undefined}
         aria-haspopup="menu"
-        aria-busy={isLoading || undefined}
-        disabled={isLoading}
-        endIcon={isLoading ? undefined : <MaterialSymbol name="keyboard_arrow_down" />}
+        aria-busy={projects.isLoading || undefined}
+        disabled={projects.isLoading}
+        endIcon={projects.isLoading ? undefined : <MaterialSymbol name="keyboard_arrow_down" />}
         id="project-manager-button"
         onClick={openProjectMenu}
         size="small"
-        startIcon={isLoading ? <CircularProgress color="inherit" size={18} /> : <MaterialSymbol name="folder" />}
+        startIcon={
+          projects.isLoading ? <CircularProgress color="inherit" size={18} /> : <MaterialSymbol name="folder" />
+        }
         sx={{
           justifyContent: 'space-between',
           maxWidth: {
@@ -199,7 +258,7 @@ export function ProjectManager({ isLoading = false }: ProjectManagerProps) {
         variant="outlined"
       >
         <Typography component="span" noWrap variant="button">
-          {isLoading ? 'Loading projects' : selectedProject.title}
+          {projects.isLoading ? 'Loading projects' : selectedProject ? selectedProject.title : 'No project selected'}
         </Typography>
       </Button>
 
@@ -219,14 +278,16 @@ export function ProjectManager({ isLoading = false }: ProjectManagerProps) {
           },
         }}
       >
-        {projects.map((project) => (
+        {(projects.data ?? []).map((project) => (
           <MenuItem
             key={project.id}
             onClick={() => {
-              setSelectedProjectId(project.id);
+              void projects.selectProject(project.id).catch((error) => {
+                showError(error, 'Failed to select project.');
+              });
               closeProjectMenu();
             }}
-            selected={project.id === selectedProject.id}
+            selected={project.id === selectedProject?.id}
           >
             {project.title}
           </MenuItem>
@@ -271,23 +332,44 @@ export function ProjectManager({ isLoading = false }: ProjectManagerProps) {
       <Dialog
         fullWidth
         maxWidth="xs"
-        onClose={() => setIsDeleteDialogOpen(false)}
-        open={isDeleteDialogOpen}
+        onClose={closeDeleteDialog}
+        open={deleteDialog.isOpen}
         disableAutoFocus
+        slotProps={{
+          transition: {
+            onExited: resetDeleteDialog,
+          },
+        }}
       >
         <DialogTitle>Delete project</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Delete {selectedProject.title}? This removes the project from this session.
+            Delete {deleteDialog.project?.title}? This removes the project from this session.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+          <Button onClick={closeDeleteDialog}>Cancel</Button>
           <Button color="error" onClick={deleteSelectedProject} variant="contained">
             Delete
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        anchorOrigin={{ horizontal: 'center', vertical: 'bottom' }}
+        autoHideDuration={6000}
+        onClose={closeErrorSnackbar}
+        open={errorSnackbar.isOpen}
+        slotProps={{
+          transition: {
+            onExited: resetErrorSnackbar,
+          },
+        }}
+      >
+        <Alert onClose={closeErrorSnackbar} severity="error" variant="filled">
+          {errorSnackbar.message}
+        </Alert>
+      </Snackbar>
     </>
   );
 }

@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { Project } from '../database/entities';
 import { getRecord, STORE_PROJECTS } from '../database/storage';
-import { createProject, deleteProject, getAllProjects, updateProject, type CreateProjectData } from './projects';
+import {
+  createProject,
+  deleteProject,
+  getAllProjects,
+  setSelectedProject,
+  updateProject,
+  type CreateProjectData,
+} from './projects';
 import { unwrapErr, unwrapOk } from '../shared/result';
 
 describe('projects repository', async () => {
@@ -16,7 +23,7 @@ describe('projects repository', async () => {
 
     expect(projectData.title.trim()).equal('Project #1');
     expect(projectData.title.trim()).equal(storedProject.title);
-    expect(storedProject.isDefault).toBe(false);
+    expect(storedProject.isSelected).toBe(false);
     expect(storedProject.updatedAt).toBeNull();
     expect(storedProject.description).equal('A new project');
     expect(storedProject.createdAt).not.toBeNull();
@@ -57,21 +64,33 @@ describe('projects repository', async () => {
     expect(project.id).toEqual(updatedProject.id);
   });
 
-  it('can delete project successfully', async () => {
-    const projectData = {
-      title: 'Project #1',
-      description: 'An example project',
-    };
+  it('can persist selected project', async () => {
+    const firstProject = unwrapOk(await createProject({ title: 'Project #1', description: '' }));
+    const secondProject = unwrapOk(await createProject({ title: 'Project #2', description: '' }));
 
-    const createdProject = unwrapOk(await createProject(projectData));
+    unwrapOk(await setSelectedProject(secondProject.id));
+
     const allProjects = unwrapOk(await getAllProjects());
 
-    expect(allProjects.length).toBe(1);
+    expect(allProjects.find((project) => project.id === firstProject.id)?.isSelected).toBe(false);
+    expect(allProjects.find((project) => project.id === secondProject.id)?.isSelected).toBe(true);
+  });
 
-    const deleteResult = unwrapOk(await deleteProject(createdProject.id));
+  it('can delete selected project and select a remaining project', async () => {
+    const firstProject = unwrapOk(await createProject({ title: 'Project #1', description: 'An example project' }));
+    const secondProject = unwrapOk(await createProject({ title: 'Project #2', description: 'An example project' }));
+
+    unwrapOk(await setSelectedProject(secondProject.id));
+
+    const deleteResult = unwrapOk(await deleteProject(secondProject.id));
+    const remainingProjects = unwrapOk(await getAllProjects());
 
     expect(deleteResult.deleted).toBe(true);
-    expect(unwrapOk(await getAllProjects()).length).toBe(0);
+    expect(remainingProjects).toHaveLength(1);
+    expect(remainingProjects[0]).toMatchObject({
+      id: firstProject.id,
+      isSelected: true,
+    });
   });
 
   it('fails gracefully when deleting project that does not exist', async () => {

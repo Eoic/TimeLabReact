@@ -11,6 +11,6 @@ export interface Project extends IDBRecord {
   createdAt: number;
   /** When the project was last modified */
   updatedAt: number | null;
-  /** Whether this is the default project */
-  isDefault: boolean;
+  /** Whether this is the currently selected project */
+  isSelected: boolean;
 }

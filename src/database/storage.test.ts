@@ -48,7 +48,7 @@ describe('storage', () => {
       createdAt: Date.now(),
       updatedAt: null,
       isArchived: false,
-      isDefault: true,
+      isSelected: true,
     };
 
     unwrapOk(await insertRecord(record, STORE_PROJECTS));
@@ -66,7 +66,7 @@ describe('storage', () => {
       createdAt: Date.now(),
       updatedAt: null,
       isArchived: false,
-      isDefault: true,
+      isSelected: true,
     };
 
     unwrapOk(await insertRecord(record, STORE_PROJECTS));
@@ -85,7 +85,7 @@ describe('storage', () => {
       createdAt: Date.now(),
       updatedAt: null,
       isArchived: false,
-      isDefault: true,
+      isSelected: true,
     };
 
     unwrapOk(await insertRecord(record, STORE_PROJECTS));

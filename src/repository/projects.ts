@@ -10,6 +10,11 @@ import {
 } from '../database/storage';
 import { err, ok, type Result } from '../shared/result';
 
+const DEFAULT_PROJECT = {
+  title: 'Untitled',
+  description: '',
+};
+
 export type CreateProjectData = {
   title: string;
   description: string;
@@ -22,6 +27,34 @@ export type UpdateProjectData = {
 
 export class ProjectRepositoryError extends TimeLabError {
   override name = 'ProjectRepositoryError';
+}
+
+export async function bootstrap(): Promise<Result<void, ProjectRepositoryError>> {
+  const projectsResult = await getAllProjects();
+
+  if (!projectsResult.ok) {
+    return err(new ProjectRepositoryError('Failed while fetching projects', projectsResult.error));
+  }
+
+  const selectedProject = projectsResult.value.find((project) => project.isSelected) ?? null;
+
+  if (selectedProject) {
+    return ok(undefined);
+  }
+
+  const projectToSelect = projectsResult.value[0] ?? null;
+
+  if (projectToSelect) {
+    return setSelectedProject(projectToSelect.id);
+  }
+
+  const createResult = await createProject(DEFAULT_PROJECT);
+
+  if (!createResult.ok) {
+    return err(new ProjectRepositoryError('Failed to create initial project', createResult.error));
+  }
+
+  return setSelectedProject(createResult.value.id);
 }
 
 export async function getProjectById(id: string): Promise<Result<Project, ProjectRepositoryError>> {
@@ -44,6 +77,33 @@ export async function getAllProjects(): Promise<Result<Project[], ProjectReposit
   return ok(result.value);
 }
 
+export async function setSelectedProject(id: string): Promise<Result<void, ProjectRepositoryError>> {
+  const projects = await getAllProjects();
+
+  if (!projects.ok) {
+    return err(new ProjectRepositoryError('Failed to fetch project', projects.error));
+  }
+
+  if (!projects.value.some((project) => project.id === id)) {
+    return err(new ProjectRepositoryError('Cannot select missing project.'));
+  }
+
+  for (const project of projects.value) {
+    const selectedProject: Project = {
+      ...project,
+      isSelected: project.id === id,
+    };
+
+    const updateResult = await updateRecord(selectedProject, STORE_PROJECTS);
+
+    if (!updateResult.ok) {
+      return err(new ProjectRepositoryError('Failed to select project', updateResult.error));
+    }
+  }
+
+  return ok(undefined);
+}
+
 export async function createProject(data: CreateProjectData): Promise<Result<Project, ProjectRepositoryError>> {
   const trimmedTitle = data.title.trim();
 
@@ -56,7 +116,7 @@ export async function createProject(data: CreateProjectData): Promise<Result<Pro
     title: trimmedTitle,
     description: data.description,
     createdAt: Date.now(),
-    isDefault: false,
+    isSelected: false,
     updatedAt: null,
   };
 
@@ -108,14 +168,30 @@ export async function deleteProject(id: string): Promise<Result<{ deleted: boole
     return err(new ProjectRepositoryError('Failed to delete project', project.error));
   }
 
-  if (project.value.isDefault) {
-    return err(new ProjectRepositoryError('Cannot delete default project.'));
+  const allProjects = await getAllProjects();
+
+  if (!allProjects.ok) {
+    return err(new ProjectRepositoryError('Failed to fetch projects', allProjects.error));
+  }
+
+  const remainingProjects = allProjects.value.filter((candidate) => candidate.id !== id);
+
+  if (remainingProjects.length === 0) {
+    return err(new ProjectRepositoryError('Cannot delete the last project.'));
   }
 
   const result = await deleteRecord(id, STORE_PROJECTS);
 
   if (!result.ok) {
     return err(new ProjectRepositoryError('Failed to delete project', result.error));
+  }
+
+  if (project.value.isSelected) {
+    const selectResult = await setSelectedProject(remainingProjects[0].id);
+
+    if (!selectResult.ok) {
+      return err(new ProjectRepositoryError('Failed to select replacement project', selectResult.error));
+    }
   }
 
   return ok({ deleted: true });
