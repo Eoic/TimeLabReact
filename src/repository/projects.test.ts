@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { Project } from '../database/entities';
 import { getRecord, STORE_PROJECTS } from '../database/storage';
-import { createProject, updateProject, type CreateProjectData } from './projects';
+import { createProject, deleteProject, getAllProjects, updateProject, type CreateProjectData } from './projects';
+import { unwrapErr, unwrapOk } from '../shared/result';
 
 describe('projects repository', async () => {
   it('can create a new project from valid data', async () => {
@@ -10,25 +11,15 @@ describe('projects repository', async () => {
       description: 'A new project',
     };
 
-    const result = await createProject(projectData);
-
-    if (!result.ok) {
-      throw new Error('Project creation failed.');
-    }
-
-    const storedProject = await getRecord<Project>(result.value.id, STORE_PROJECTS);
-
-    if (!storedProject.ok) {
-      throw new Error('Failed to create project.');
-    }
+    const project = unwrapOk(await createProject(projectData));
+    const storedProject = unwrapOk(await getRecord<Project>(project.id, STORE_PROJECTS));
 
     expect(projectData.title.trim()).equal('Project #1');
-    expect(projectData.title.trim()).equal(storedProject.value!.title);
-    expect(storedProject.value).not.toBeNull();
-    expect(storedProject.value!.isDefault).toBe(false);
-    expect(storedProject.value!.updatedAt).toBeNull();
-    expect(storedProject.value!.description).equal('A new project');
-    expect(storedProject.value!.createdAt).not.toBeNull();
+    expect(projectData.title.trim()).equal(storedProject.title);
+    expect(storedProject.isDefault).toBe(false);
+    expect(storedProject.updatedAt).toBeNull();
+    expect(storedProject.description).equal('A new project');
+    expect(storedProject.createdAt).not.toBeNull();
   });
 
   it('fails to create a project with no title', async () => {
@@ -37,14 +28,10 @@ describe('projects repository', async () => {
       description: 'An example project.',
     };
 
-    const result = await createProject(projectData);
+    const error = unwrapErr(await createProject(projectData));
 
-    if (result.ok) {
-      throw new Error('Project creation should have failed.');
-    }
-
-    expect(result.error.name).toBe('ProjectRepositoryError');
-    expect(result.error.message).contain('Title is required');
+    expect(error.name).toBe('ProjectRepositoryError');
+    expect(error.message).contain('Title is required');
   });
 
   it('can update existing project', async () => {
@@ -58,23 +45,32 @@ describe('projects repository', async () => {
       description: 'Updated project',
     };
 
-    const result = await createProject(originalProjectData);
+    const project = unwrapOk(await createProject(originalProjectData));
 
-    if (!result.ok) {
-      throw new Error('Project creation failed.');
-    }
+    expect(project.title).toEqual(originalProjectData.title);
+    expect(project.description).toEqual(originalProjectData.description);
 
-    expect(result.value.title).toEqual(originalProjectData.title);
-    expect(result.value.description).toEqual(originalProjectData.description);
+    const updatedProject = unwrapOk(await updateProject(project.id, newProjectData));
 
-    const updateResult = await updateProject(result.value.id, newProjectData);
+    expect(updatedProject.title).toEqual(newProjectData.title);
+    expect(updatedProject.description).toEqual(newProjectData.description);
+    expect(project.id).toEqual(updatedProject.id);
+  });
 
-    if (!updateResult.ok) {
-      throw new Error('Failed to update project.');
-    }
+  it('can delete project successfully', async () => {
+    const projectData = {
+      title: 'Project #1',
+      description: 'An example project',
+    };
 
-    expect(updateResult.value.title).toEqual(newProjectData.title);
-    expect(updateResult.value.description).toEqual(newProjectData.description);
-    expect(result.value.id).toEqual(updateResult.value.id);
+    const createdProject = unwrapOk(await createProject(projectData));
+    const allProjects = unwrapOk(await getAllProjects());
+
+    expect(allProjects.length).toBe(1);
+
+    const deleteResult = unwrapOk(await deleteProject(createdProject.id));
+
+    expect(deleteResult.deleted).toBe(true);
+    expect(unwrapOk(await getAllProjects()).length).toBe(0);
   });
 });

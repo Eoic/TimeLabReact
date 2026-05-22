@@ -17,3 +17,19 @@ export function isOk<T, E extends Error>(result: Result<T, E>): result is Ok<T> 
 export function isErr<T, E extends Error>(result: Result<T, E>): result is Err<E> {
   return !result.ok;
 }
+
+export function unwrapOk<T, E extends Error>(result: Result<T, E>): T {
+  if (!result.ok) {
+    throw result.error;
+  }
+
+  return result.value;
+}
+
+export function unwrapErr<T, E extends Error>(result: Result<T, E>): E {
+  if (result.ok) {
+    throw new Error('Expected result to be an error.');
+  }
+
+  return result.error;
+}

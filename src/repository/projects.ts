@@ -1,7 +1,14 @@
 import type { Project } from '../database/entities';
 import { TimeLabError } from '../database/errors';
-import { getRecord, insertRecord, STORE_PROJECTS, updateRecord } from '../database/storage';
-import { err, type Result } from '../shared/result';
+import {
+  deleteRecord,
+  getAllRecords,
+  getRecord,
+  insertRecord,
+  STORE_PROJECTS,
+  updateRecord,
+} from '../database/storage';
+import { err, ok, type Result } from '../shared/result';
 
 export type CreateProjectData = {
   title: string;
@@ -15,6 +22,26 @@ export type UpdateProjectData = {
 
 export class ProjectRepositoryError extends TimeLabError {
   override name = 'ProjectRepositoryError';
+}
+
+export async function getProjectById(id: string): Promise<Result<Project, ProjectRepositoryError>> {
+  const result = await getRecord<Project>(id, STORE_PROJECTS);
+
+  if (!result.ok) {
+    return err(new ProjectRepositoryError('Failed to fetch project', result.error));
+  }
+
+  return ok(result.value);
+}
+
+export async function getAllProjects(): Promise<Result<Project[], ProjectRepositoryError>> {
+  const result = await getAllRecords<Project>(STORE_PROJECTS);
+
+  if (!result.ok) {
+    return err(new ProjectRepositoryError('Failed to fetch projects', result.error));
+  }
+
+  return ok(result.value);
 }
 
 export async function createProject(data: CreateProjectData): Promise<Result<Project, ProjectRepositoryError>> {
@@ -52,10 +79,6 @@ export async function updateProject(
     return err(new ProjectRepositoryError('Failed to retrieve project.', existingResult.error));
   }
 
-  if (existingResult.value === null) {
-    return err(new ProjectRepositoryError('Project not found.'));
-  }
-
   const title = data.title === undefined ? existingResult.value.title : data.title.trim();
 
   if (title.length === 0) {
@@ -76,4 +99,24 @@ export async function updateProject(
   }
 
   return updateResult;
+}
+
+export async function deleteProject(id: string): Promise<Result<{ deleted: boolean }, ProjectRepositoryError>> {
+  const project = await getProjectById(id);
+
+  if (!project.ok) {
+    return err(new ProjectRepositoryError('Failed to delete project', project.error));
+  }
+
+  if (project.value.isDefault) {
+    return err(new ProjectRepositoryError('Cannot delete default project.'));
+  }
+
+  const result = await deleteRecord(id, STORE_PROJECTS);
+
+  if (!result.ok) {
+    return err(new ProjectRepositoryError('Failed to delete project', result.error));
+  }
+
+  return ok({ deleted: true });
 }

@@ -9,8 +9,8 @@ import {
   updateRecord,
   STORE_PROJECTS,
 } from './storage';
-import type { Err, Ok } from '../shared/result';
 import { type Project } from './entities';
+import { unwrapErr, unwrapOk } from '../shared/result';
 
 function makeFailingRequest(error: DOMException | null): IDBRequest {
   const request = {
@@ -50,23 +50,12 @@ describe('storage', () => {
       isDefault: true,
     };
 
-    const saveResult = await insertRecord(record, STORE_PROJECTS);
-    const recordResult = await getRecord<Project>(record.id, STORE_PROJECTS);
-    const recordsResult = await getAllRecords<Project>(STORE_PROJECTS);
+    unwrapOk(await insertRecord(record, STORE_PROJECTS));
+    const storedRecord = unwrapOk(await getRecord<Project>(record.id, STORE_PROJECTS));
+    const records = unwrapOk(await getAllRecords<Project>(STORE_PROJECTS));
 
-    expect(saveResult.ok).toBe(true);
-
-    if (!recordResult.ok) {
-      throw recordResult.error;
-    }
-
-    expect(recordResult.value).toEqual(record);
-
-    if (!recordsResult.ok) {
-      throw recordsResult.error;
-    }
-
-    expect(recordsResult.value).toEqual([record]);
+    expect(storedRecord).toEqual(record);
+    expect(records).toEqual([record]);
   });
 
   it('deletes records from IndexedDB', async () => {
@@ -80,41 +69,29 @@ describe('storage', () => {
       isDefault: true,
     };
 
-    const saveResult = await insertRecord(record, STORE_PROJECTS);
-    const deleteResult = await deleteRecord(record.id, STORE_PROJECTS);
-    const recordsResult = await getAllRecords<Project>(STORE_PROJECTS);
+    unwrapOk(await insertRecord(record, STORE_PROJECTS));
+    unwrapOk(await deleteRecord(record.id, STORE_PROJECTS));
+    const records = unwrapOk(await getAllRecords<Project>(STORE_PROJECTS));
 
-    expect(saveResult.ok).toBe(true);
-    expect(deleteResult.ok).toBe(true);
-
-    if (!recordsResult.ok) {
-      throw recordsResult.error;
-    }
-
-    expect(recordsResult.value).toEqual([]);
+    expect(records).toEqual([]);
   });
 
   it('returns an error when saving to an unknown store', async () => {
-    const result = await insertRecord({ id: 'project-1' }, 'missing-store');
+    const error = unwrapErr(await insertRecord({ id: 'project-1' }, 'missing-store'));
 
-    expect(result.ok).toBeFalsy();
-    expect((result as Err).error.name).toBe('StorageError');
-    expect((result as Err).error.message).toContain("Object store 'missing-store' was not found!");
+    expect(error.name).toBe('StorageError');
+    expect(error.message).toContain("Object store 'missing-store' was not found!");
   });
 
   it('returns an error when getting a single record from unknown store', async () => {
-    const result = await getRecord<Project>('project-1', 'some-store-1');
+    const error = unwrapErr(await getRecord<Project>('project-1', 'some-store-1'));
 
-    expect(result.ok).toBeFalsy();
-    expect((result as Err).error.name).toBe('StorageError');
-    expect((result as Err).error.message).toContain('Failed to retrieve record');
+    expect(error.name).toBe('StorageError');
+    expect(error.message).toContain('Failed to retrieve record');
   });
 
-  it('returns ok with undefined when the record does not exist', async () => {
-    const result = await getRecord<Project>('missing-id', STORE_PROJECTS);
-
-    expect(result.ok).toBe(true);
-    expect((result as Ok<Project | null>).value).toBeNull();
+  it('returns err when the record does not exist', async () => {
+    expect(unwrapErr(await getRecord<Project>('missing-id', STORE_PROJECTS)).name).toBe('StorageError');
   });
 
   it('successive calls to known store do not fail', async () => {
@@ -124,68 +101,43 @@ describe('storage', () => {
     const results = [resultA, resultB, resultC];
 
     for (const result of results) {
-      expect(result.ok).toBe(true);
-      expect((result as Ok<Project | null>).value).toBe(null);
+      expect(unwrapErr(result).name).toBe('StorageError');
     }
   });
 
   it('returns an error when getAll request fails', async () => {
     vi.spyOn(FakeIDBObjectStore.prototype, 'getAll').mockImplementation(() => makeFailingRequest(null));
 
-    const result = await getAllRecords<Project>(STORE_PROJECTS);
+    const error = unwrapErr(await getAllRecords<Project>(STORE_PROJECTS));
 
-    expect(result.ok).toBe(false);
-
-    if (result.ok) {
-      throw new Error('Expected getAllRecords to fail.');
-    }
-
-    expect(result.error.name).toBe('StorageError');
-    expect(result.error.message).toBe('Failed to retrieve records');
-    expect(result.error.cause).toEqual(new Error(`Failed to getAllRecords() from ${STORE_PROJECTS}.`));
+    expect(error.name).toBe('StorageError');
+    expect(error.message).toBe('Failed to retrieve records');
+    expect(error.cause).toEqual(new Error(`Failed to getAllRecords() from ${STORE_PROJECTS}.`));
   });
 
   it('returns an error when add request fails while saving', async () => {
     vi.spyOn(FakeIDBObjectStore.prototype, 'add').mockImplementation(() => makeFailingRequest(null));
     vi.spyOn(FakeIDBObjectStore.prototype, 'put').mockImplementation(() => makeFailingRequest(null));
 
-    const resultInsert = await insertRecord({ id: 'project-1' }, STORE_PROJECTS);
-    const resultUpdate = await updateRecord({ id: 'project-1' }, STORE_PROJECTS);
+    const insertError = unwrapErr(await insertRecord({ id: 'project-1' }, STORE_PROJECTS));
+    const updateError = unwrapErr(await updateRecord({ id: 'project-1' }, STORE_PROJECTS));
 
-    expect(resultInsert.ok).toBe(false);
-    expect(resultUpdate.ok).toBe(false);
+    expect(insertError.name).toBe('StorageError');
+    expect(insertError.message).toContain('Failed to save record');
+    expect(insertError.cause).toEqual(new Error('Failed to perform action'));
 
-    if (resultInsert.ok) {
-      throw new Error('Expected insertRecord to fail.');
-    }
-
-    if (resultUpdate.ok) {
-      throw new Error('Expected updateRecord to fail.');
-    }
-
-    expect(resultInsert.error.name).toBe('StorageError');
-    expect(resultInsert.error.message).toContain('Failed to save record');
-    expect(resultInsert.error.cause).toEqual(new Error('Failed to perform action'));
-
-    expect(resultUpdate.error.name).toBe('StorageError');
-    expect(resultUpdate.error.message).toContain("Record doesn't exist");
-    expect(resultUpdate.error.cause).toEqual('Not found');
+    expect(updateError.name).toBe('StorageError');
+    expect(updateError.message).toContain('Failed to acquire existing record');
   });
 
   it('returns an error when delete request fails', async () => {
     vi.spyOn(FakeIDBObjectStore.prototype, 'delete').mockImplementation(() => makeFailingRequest(null));
 
-    const result = await deleteRecord('project-1', STORE_PROJECTS);
+    const error = unwrapErr(await deleteRecord('project-1', STORE_PROJECTS));
 
-    expect(result.ok).toBe(false);
-
-    if (result.ok) {
-      throw new Error('Expected deleteRecord to fail.');
-    }
-
-    expect(result.error.name).toBe('StorageError');
-    expect(result.error.message).toBe('Failed to delete record with id=project-1');
-    expect(result.error.cause).toEqual(new Error("Failed to delete() record with id=project-1'"));
+    expect(error.name).toBe('StorageError');
+    expect(error.message).toBe('Failed to delete record with id=project-1');
+    expect(error.cause).toEqual(new Error("Failed to delete() record with id=project-1'"));
   });
 });
 

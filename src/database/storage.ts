@@ -87,14 +87,16 @@ export async function getAllRecords<T extends IDBRecord>(storeName: string): Pro
   }
 }
 
-export async function getRecord<T extends IDBRecord>(
-  id: string,
-  storeName: string,
-): Promise<Result<T | null, StorageError>> {
+export async function getRecord<T extends IDBRecord>(id: string, storeName: string): Promise<Result<T, StorageError>> {
   try {
     const database = await _openDatabase();
     const result = await _fetch<T>(database, storeName, 'getRecord()', (store) => store.get(id));
-    return ok(result ?? null);
+
+    if (!result) {
+      throw new Error('Record does not exist');
+    }
+
+    return ok(result);
   } catch (error) {
     return err(new StorageError(`Failed to retrieve record with id=${id}`, error));
   }
@@ -141,11 +143,7 @@ export async function updateRecord<T extends IDBRecord & { id: string }>(record:
   const result = await getRecord<T>(record.id, storeName);
 
   if (!result.ok) {
-    return err(new StorageError('Failed to check existing record.'));
-  }
-
-  if (result.value === null) {
-    return err(new StorageError("Record doesn't exist.", 'Not found'));
+    return err(new StorageError('Failed to acquire existing record', result.error));
   }
 
   return await _saveRecord(record, storeName, (store, record) => store.put(record));
