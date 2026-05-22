@@ -79,7 +79,7 @@ const downsamplingOptions: [SearchableDropdownOption<Downsampling>, ...Searchabl
 
 function PlotConfigSection({ children, title }: PlotConfigSectionProps) {
   return (
-    <Box component="section" sx={{ px: 1 }}>
+    <Box component="section" sx={{ px: 0 }}>
       <Typography component="h3" sx={{ mb: children ? 0.2 : 0 }} variant="overline">
         {title}
       </Typography>
@@ -115,7 +115,7 @@ export function PlotConfiguration() {
   };
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={1.25}>
       <PlotConfigSection title="Axes">
         <Stack spacing={2}>
           <SearchableDropdown

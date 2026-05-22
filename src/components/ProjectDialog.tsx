@@ -68,7 +68,16 @@ export function ProjectDialog({
               {errorMessage}
             </Alert>
           ) : null}
-          <TextField name="title" autoFocus fullWidth id={id} label="Title" onChange={onChange} value={values.title} />
+          <TextField
+            name="title"
+            autoFocus
+            fullWidth
+            id={id}
+            label="Title"
+            onChange={onChange}
+            value={values.title}
+            required
+          />
           <TextField
             name="description"
             fullWidth

@@ -18,24 +18,49 @@ type WorkspacePanelProps = PanelHeaderProps & {
 function PanelHeader({ icon, title }: PanelHeaderProps) {
   return (
     <Box
+      component="header"
       sx={{
         alignItems: 'center',
+        borderBottom: 1,
+        borderColor: 'divider',
         display: 'flex',
-        gap: 1,
+        gap: 1.25,
         mb: 1,
         minWidth: 0,
+        pb: 1.25,
       }}
     >
       <Box
         aria-hidden
         sx={{
+          alignItems: 'center',
+          bgcolor: 'action.hover',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: 1,
           color: 'primary.main',
           display: 'flex',
+          flex: '0 0 auto',
+          height: 28,
+          justifyContent: 'center',
+          width: 28,
+          '& .MuiIcon-root': {
+            fontSize: 20,
+          },
         }}
       >
         <MaterialSymbol name={icon} />
       </Box>
-      <Typography component="h2" noWrap variant="subtitle2">
+      <Typography
+        component="h2"
+        noWrap
+        sx={{
+          fontWeight: 600,
+          lineHeight: 1.25,
+          minWidth: 0,
+        }}
+        variant="subtitle2"
+      >
         {title}
       </Typography>
     </Box>
