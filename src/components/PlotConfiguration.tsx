@@ -8,6 +8,7 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useRef, useState } from 'react';
+import { useDebounce } from '../hooks/useDebounce';
 import { FormCheckbox } from './FormCheckbox';
 import { MaterialSymbol } from './MaterialSymbol';
 import { SearchableDropdown } from './SearchableDropdown';
@@ -149,6 +150,7 @@ const thresholdStyleOptions: [
 ];
 
 const hexColorPattern = /^#[\da-f]{6}$/i;
+const colorCommitDelayMs = 150;
 
 function PlotConfigSection({ children, title }: PlotConfigSectionProps) {
   return (
@@ -167,13 +169,15 @@ function ColorField({ label, name, onChange, value }: ColorFieldProps) {
   const trimmedDraft = draft.trim();
   const swatchColor = hexColorPattern.test(trimmedDraft) ? trimmedDraft : value;
 
-  const commitDraft = () => {
-    if (!hexColorPattern.test(trimmedDraft)) {
+  const commitColor = (nextDraft: string) => {
+    const trimmedNextDraft = nextDraft.trim();
+
+    if (!hexColorPattern.test(trimmedNextDraft)) {
       setDraft(value);
       return;
     }
 
-    const nextValue = trimmedDraft.toLowerCase();
+    const nextValue = trimmedNextDraft.toLowerCase();
     setDraft(nextValue);
 
     if (nextValue !== value) {
@@ -181,7 +185,29 @@ function ColorField({ label, name, onChange, value }: ColorFieldProps) {
     }
   };
 
+  const {
+    cancel: cancelColorCommit,
+    debounce: debounceColorCommit,
+    flush: flushColorCommit,
+  } = useDebounce(commitColor, colorCommitDelayMs);
+
+  const commitDraft = () => {
+    flushColorCommit(draft);
+  };
+
+  const scheduleColorCommit = (nextDraft: string) => {
+    setDraft(nextDraft);
+
+    if (!hexColorPattern.test(nextDraft)) {
+      cancelColorCommit();
+      return;
+    }
+
+    debounceColorCommit(nextDraft);
+  };
+
   const openPicker = () => {
+    pickerInputRef.current?.focus();
     pickerInputRef.current?.click();
   };
 
@@ -191,7 +217,10 @@ function ColorField({ label, name, onChange, value }: ColorFieldProps) {
         fullWidth
         label={label}
         onBlur={commitDraft}
-        onChange={(event) => setDraft(event.target.value)}
+        onChange={(event) => {
+          cancelColorCommit();
+          setDraft(event.target.value);
+        }}
         size="small"
         slotProps={{
           input: {
@@ -241,9 +270,9 @@ function ColorField({ label, name, onChange, value }: ColorFieldProps) {
         aria-label={`${name} color picker`}
         component="input"
         onChange={(event) => {
-          setDraft(event.target.value);
-          onChange(event.target.value);
+          scheduleColorCommit(event.target.value);
         }}
+        onBlur={(event) => flushColorCommit(event.currentTarget.value)}
         ref={pickerInputRef}
         sx={{
           height: 1,
@@ -544,7 +573,11 @@ export function PlotConfiguration() {
             Add threshold
           </Button>
 
-          {configuration.guides.thresholds.length !== 0 && (
+          {configuration.guides.thresholds.length === 0 ? (
+            <Typography color="text.secondary" variant="body2">
+              No thresholds
+            </Typography>
+          ) : (
             <Stack spacing={1}>
               {configuration.guides.thresholds.map((threshold, index) => (
                 <ThresholdEditor
