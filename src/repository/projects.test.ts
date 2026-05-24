@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Project } from '../database/entities';
+import type { Project } from '../database/models/project';
 import { getRecord, STORE_PROJECTS } from '../database/storage';
 import {
   createProject,

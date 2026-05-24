@@ -1,4 +1,4 @@
-import type { Project } from '../database/entities';
+import type { Project } from '../database/models/project';
 import { TimeLabError } from '../database/errors';
 import {
   deleteRecord,

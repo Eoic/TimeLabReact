@@ -5,8 +5,8 @@ import { ErrorSnackbar, type ErrorSnackbarState } from './project-manager/ErrorS
 import { ProjectMenu } from './project-manager/ProjectMenu';
 import { useProjectDialogState } from './project-manager/useProjectDialogState';
 import { useProjects } from '../hooks/useProjects';
-import type { Project } from '../database/entities';
-import type { CreateProjectFormData } from '../forms/project';
+import type { Project } from '../database/models/project';
+import type { ProjectFormData } from '../forms/project';
 
 type DeleteDialogState = {
   isOpen: boolean;
@@ -95,7 +95,7 @@ export function ProjectManager() {
       return;
     }
 
-    const projectData: CreateProjectFormData = {
+    const projectData: ProjectFormData = {
       title,
       description,
     };

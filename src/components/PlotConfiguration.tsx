@@ -7,67 +7,37 @@ import Slider from '@mui/material/Slider';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useDebounce } from '../hooks/useDebounce';
 import { FormCheckbox } from './FormCheckbox';
 import { MaterialSymbol } from './MaterialSymbol';
 import { SearchableDropdown } from './SearchableDropdown';
 import type { SearchableDropdownOption } from './SearchableDropdown';
-
-type PlotAxis = 'amplitude' | 'sampleIndex' | 'time';
-type Downsampling = 'average' | 'lttb' | 'max' | 'none';
-
-type Threshold = {
-  id: string;
-  axis: 'x' | 'y';
-  value: number;
-  color: string;
-  label: string;
-  style: 'solid' | 'dashed';
-};
-
-type PlotConfigurationState = {
-  axes: {
-    x: PlotAxis;
-    y: PlotAxis;
-  };
-
-  appearance: {
-    downsampling: Downsampling;
-    isAreaFillEnabled: boolean;
-    isShowPointsEnabled: boolean;
-    isSmoothLineEnabled: boolean;
-    isShowGridlinesEnabled: boolean;
-    lineWidth: number;
-  };
-
-  guides: {
-    thresholds: Threshold[];
-  };
-};
+import type { PlotConfigurationFormData } from '../forms/plotConfiguration';
+import type { Downsampling, PlotAxis, Threshold } from '../database/models/plotConfiguration';
 
 type PlotConfigSectionProps = {
-  children?: React.ReactNode;
   title: string;
+  children?: React.ReactNode;
 };
 
 type UpdateThreshold = <TKey extends keyof Threshold>(id: string, key: TKey, value: Threshold[TKey]) => void;
 
 type ThresholdEditorProps = {
   index: number;
-  onRemove: (id: string) => void;
-  onUpdate: UpdateThreshold;
   threshold: Threshold;
+  onUpdate: UpdateThreshold;
+  onRemove: (id: string) => void;
 };
 
 type ColorFieldProps = {
-  label: string;
   name: string;
-  onChange: (value: string) => void;
   value: string;
+  label: string;
+  onChange: (value: string) => void;
 };
 
-const defaultPlotConfiguration: PlotConfigurationState = {
+const defaultPlotConfiguration: PlotConfigurationFormData = {
   axes: {
     x: 'time',
     y: 'amplitude',
@@ -149,8 +119,8 @@ const thresholdStyleOptions: [
   },
 ];
 
-const hexColorPattern = /^#[\da-f]{6}$/i;
 const colorCommitDelayMs = 150;
+const hexColorPattern = /^#[\da-f]{6}$/i;
 
 function PlotConfigSection({ children, title }: PlotConfigSectionProps) {
   return (
@@ -403,9 +373,9 @@ function ThresholdEditor({ index, onRemove, onUpdate, threshold }: ThresholdEdit
 
 export function PlotConfiguration() {
   const nextThresholdId = useRef(1);
-  const [configuration, setConfiguration] = useState<PlotConfigurationState>(defaultPlotConfiguration);
+  const [configuration, setConfiguration] = useState<PlotConfigurationFormData>(defaultPlotConfiguration);
 
-  const updateAxis = (axis: keyof PlotConfigurationState['axes'], value: PlotAxis) => {
+  const updateAxis = (axis: keyof PlotConfigurationFormData['axes'], value: PlotAxis) => {
     setConfiguration((currentConfiguration) => ({
       ...currentConfiguration,
       axes: {
@@ -415,9 +385,9 @@ export function PlotConfiguration() {
     }));
   };
 
-  const updateAppearance = <TKey extends keyof PlotConfigurationState['appearance']>(
+  const updateAppearance = <TKey extends keyof PlotConfigurationFormData['appearance']>(
     key: TKey,
-    value: PlotConfigurationState['appearance'][TKey],
+    value: PlotConfigurationFormData['appearance'][TKey],
   ) => {
     setConfiguration((currentConfiguration) => ({
       ...currentConfiguration,
@@ -476,6 +446,11 @@ export function PlotConfiguration() {
       },
     }));
   };
+
+  useEffect(() => {
+    // TODO:
+    // Save to DB.
+  }, [configuration]);
 
   return (
     <Stack spacing={1.25}>
@@ -574,9 +549,7 @@ export function PlotConfiguration() {
           </Button>
 
           {configuration.guides.thresholds.length === 0 ? (
-            <Typography color="text.secondary" variant="body2">
-              No thresholds
-            </Typography>
+            <Typography color="text.secondary" variant="body2"></Typography>
           ) : (
             <Stack spacing={1}>
               {configuration.guides.thresholds.map((threshold, index) => (

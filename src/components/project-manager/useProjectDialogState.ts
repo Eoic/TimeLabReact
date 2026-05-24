@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ChangeEventHandler } from 'react';
-import type { Project } from '../../database/entities';
-import type { CreateProjectFormData } from '../../forms/project';
+import type { Project } from '../../database/models/project';
+import type { ProjectFormData } from '../../forms/project';
 
 export type ProjectDialogMode = 'create' | 'rename';
 
@@ -11,14 +11,14 @@ export type ProjectDialogState = {
   title: string;
 };
 
-const EMPTY_PROJECT_FORM: CreateProjectFormData = {
+const EMPTY_PROJECT_FORM: ProjectFormData = {
   title: '',
   description: '',
 };
 
 export function useProjectDialogState() {
   const [dialog, setDialog] = useState<ProjectDialogState | null>(null);
-  const [draft, setDraft] = useState<CreateProjectFormData>(EMPTY_PROJECT_FORM);
+  const [draft, setDraft] = useState<ProjectFormData>(EMPTY_PROJECT_FORM);
 
   const openCreateDialog = () => {
     setDraft(EMPTY_PROJECT_FORM);

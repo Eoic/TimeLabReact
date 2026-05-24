@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useReducer } from 'react';
 import * as projectApi from '../repository/projects';
-import type { Project } from '../database/entities';
-import type { CreateProjectFormData } from '../forms/project';
+import type { Project } from '../database/models/project';
+import type { ProjectFormData } from '../forms/project';
 import type { Result } from '../shared/result';
 
 const LOADING_DELAY_MS = 300;
@@ -108,7 +108,7 @@ export function useProjects() {
   );
 
   const createProject = useCallback(
-    async (data: CreateProjectFormData) => {
+    async (data: ProjectFormData) => {
       const project = await refreshAfterMutation(async () => {
         const result = await projectApi.createProject(data);
 
@@ -137,7 +137,7 @@ export function useProjects() {
   );
 
   const updateProject = useCallback(
-    async (id: string, data: CreateProjectFormData) => refreshAfterMutation(() => projectApi.updateProject(id, data)),
+    async (id: string, data: ProjectFormData) => refreshAfterMutation(() => projectApi.updateProject(id, data)),
     [refreshAfterMutation],
   );
 

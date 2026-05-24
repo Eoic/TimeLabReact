@@ -5,7 +5,7 @@ import MenuItem from '@mui/material/MenuItem';
 import { useState } from 'react';
 import type { MouseEvent } from 'react';
 import { MaterialSymbol } from '../MaterialSymbol';
-import type { Project } from '../../database/entities';
+import type { Project } from '../../database/models/project';
 
 type ProjectMenuProps = {
   isLoading: boolean;

@@ -1,4 +1,4 @@
-import type { IDBRecord } from './storage';
+import type { IDBRecord } from '../storage';
 
 export interface Project extends IDBRecord {
   id: string;
