@@ -32,30 +32,35 @@ export function SearchableDropdown<TValue extends string>({
       onChange={(_event, option) => onChange(option.value)}
       options={options}
       renderInput={(params) => <TextField {...params} label={label} />}
-      renderOption={(optionProps, option, { selected }) => (
-        <Box
-          component="li"
-          {...optionProps}
-          sx={{
-            alignItems: 'center',
-            display: 'flex',
-            gap: 1,
-          }}
-        >
+      renderOption={(optionProps, option, { selected }) => {
+        const { key, ...listItemProps } = optionProps;
+
+        return (
           <Box
-            aria-hidden
+            component="li"
+            key={key}
+            {...listItemProps}
             sx={{
-              color: 'primary.main',
+              alignItems: 'center',
               display: 'flex',
-              visibility: selected ? 'visible' : 'hidden',
-              width: 24,
+              gap: 1,
             }}
           >
-            <MaterialSymbol name="check" />
+            <Box
+              aria-hidden
+              sx={{
+                color: 'primary.main',
+                display: 'flex',
+                visibility: selected ? 'visible' : 'hidden',
+                width: 24,
+              }}
+            >
+              <MaterialSymbol name="check" />
+            </Box>
+            {option.label}
           </Box>
-          {option.label}
-        </Box>
-      )}
+        );
+      }}
       size="small"
       slotProps={{
         paper: {
