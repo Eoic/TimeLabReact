@@ -9,7 +9,7 @@ import {
   updateRecord,
   STORE_PROJECTS,
 } from './storage';
-import { type Project } from './entities';
+import { type Project } from '../database/models';
 import { unwrapErr, unwrapOk } from '../shared/result';
 
 function makeFailingRequest(error: DOMException | null): IDBRequest {

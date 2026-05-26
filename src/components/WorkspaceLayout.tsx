@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { MaterialSymbol } from './MaterialSymbol';
-import { PlotConfiguration } from './PlotConfiguration';
+import { PlotConfig } from './PlotConfig';
 import type { MaterialSymbolName } from './MaterialSymbol';
 
 type PanelHeaderProps = {
@@ -230,7 +230,7 @@ export function WorkspaceLayout() {
         }}
       >
         <WorkspacePanel component="aside" hasToolbarGutters icon="tune" title="Plot configuration">
-          <PlotConfiguration />
+          <PlotConfig />
         </WorkspacePanel>
       </Box>
 

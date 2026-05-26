@@ -13,8 +13,8 @@ import { FormCheckbox } from './FormCheckbox';
 import { MaterialSymbol } from './MaterialSymbol';
 import { SearchableDropdown } from './SearchableDropdown';
 import type { SearchableDropdownOption } from './SearchableDropdown';
-import type { PlotConfigurationFormData } from '../forms/plotConfiguration';
-import type { Downsampling, PlotAxis, Threshold } from '../database/models/plotConfiguration';
+import type { PlotConfigFormData } from '../forms/plotConfig';
+import type { Downsampling, PlotAxis, Threshold } from '../database/models/plotConfig';
 
 type PlotConfigSectionProps = {
   title: string;
@@ -37,7 +37,7 @@ type ColorFieldProps = {
   onChange: (value: string) => void;
 };
 
-const defaultPlotConfiguration: PlotConfigurationFormData = {
+const defaultPlotConfig: PlotConfigFormData = {
   axes: {
     x: 'time',
     y: 'amplitude',
@@ -371,11 +371,11 @@ function ThresholdEditor({ index, onRemove, onUpdate, threshold }: ThresholdEdit
   );
 }
 
-export function PlotConfiguration() {
+export function PlotConfig() {
   const nextThresholdId = useRef(1);
-  const [configuration, setConfiguration] = useState<PlotConfigurationFormData>(defaultPlotConfiguration);
+  const [configuration, setConfiguration] = useState<PlotConfigFormData>(defaultPlotConfig);
 
-  const updateAxis = (axis: keyof PlotConfigurationFormData['axes'], value: PlotAxis) => {
+  const updateAxis = (axis: keyof PlotConfigFormData['axes'], value: PlotAxis) => {
     setConfiguration((currentConfiguration) => ({
       ...currentConfiguration,
       axes: {
@@ -385,9 +385,9 @@ export function PlotConfiguration() {
     }));
   };
 
-  const updateAppearance = <TKey extends keyof PlotConfigurationFormData['appearance']>(
+  const updateAppearance = <TKey extends keyof PlotConfigFormData['appearance']>(
     key: TKey,
-    value: PlotConfigurationFormData['appearance'][TKey],
+    value: PlotConfigFormData['appearance'][TKey],
   ) => {
     setConfiguration((currentConfiguration) => ({
       ...currentConfiguration,

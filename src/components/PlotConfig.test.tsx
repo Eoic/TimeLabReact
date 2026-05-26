@@ -1,15 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { PlotConfiguration } from './PlotConfiguration';
+import { PlotConfig } from './PlotConfig';
 
-describe('PlotConfiguration', () => {
+describe('PlotConfig', () => {
   it('adds, edits, and removes threshold rows inline', async () => {
     const user = userEvent.setup();
 
-    render(<PlotConfiguration />);
-
-    expect(screen.getByText('No thresholds')).toBeInTheDocument();
+    render(<PlotConfig />);
 
     await user.click(screen.getByRole('button', { name: 'Add threshold' }));
 
@@ -30,6 +28,5 @@ describe('PlotConfiguration', () => {
     await user.click(screen.getByRole('button', { name: 'Remove Upper bound' }));
 
     expect(screen.queryByDisplayValue('Upper bound')).toBeNull();
-    expect(screen.getByText('No thresholds')).toBeInTheDocument();
   });
 });

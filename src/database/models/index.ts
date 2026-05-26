@@ -1,2 +1,2 @@
-export * from './plotConfiguration';
+export * from './plotConfig';
 export * from './project';
