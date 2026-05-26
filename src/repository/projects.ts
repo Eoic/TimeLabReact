@@ -1,4 +1,4 @@
-import type { Project } from '../database/models/project';
+import type { PlotConfig, Project } from '../database/models/project';
 import { TimeLabError } from '../database/errors';
 import {
   deleteRecord,
@@ -15,6 +15,28 @@ const DEFAULT_PROJECT = {
   description: '',
 };
 
+function createDefaultPlotConfig(): PlotConfig {
+  return {
+    axes: {
+      x: 'time',
+      y: 'amplitude',
+    },
+
+    appearance: {
+      downsampling: 'none',
+      isAreaFillEnabled: true,
+      isShowPointsEnabled: true,
+      isSmoothLineEnabled: true,
+      isShowGridlinesEnabled: true,
+      lineWidth: 2,
+    },
+
+    guides: {
+      thresholds: [],
+    },
+  };
+}
+
 export type CreateProjectData = {
   title: string;
   description: string;
@@ -23,13 +45,16 @@ export type CreateProjectData = {
 export type UpdateProjectData = {
   title?: string;
   description?: string;
+  plotConfig?: PlotConfig;
 };
 
 export class ProjectRepositoryError extends TimeLabError {
   override name = 'ProjectRepositoryError';
 }
 
-export async function bootstrap(): Promise<Result<void, ProjectRepositoryError>> {
+let bootstrapPromise: Promise<Result<void, ProjectRepositoryError>> | null = null;
+
+async function runBootstrap(): Promise<Result<void, ProjectRepositoryError>> {
   const projectsResult = await getAllProjects();
 
   if (!projectsResult.ok) {
@@ -53,6 +78,14 @@ export async function bootstrap(): Promise<Result<void, ProjectRepositoryError>>
   }
 
   return setSelectedProject(createResult.value.id);
+}
+
+export function bootstrap(): Promise<Result<void, ProjectRepositoryError>> {
+  bootstrapPromise ??= runBootstrap().finally(() => {
+    bootstrapPromise = null;
+  });
+
+  return bootstrapPromise;
 }
 
 export async function getProjectById(id: string): Promise<Result<Project, ProjectRepositoryError>> {
@@ -117,6 +150,7 @@ export async function createProject(data: CreateProjectData): Promise<Result<Pro
     createdAt: Date.now(),
     isSelected: false,
     updatedAt: null,
+    plotConfig: createDefaultPlotConfig(),
   };
 
   const result = await insertRecord(project, STORE_PROJECTS);
@@ -148,6 +182,7 @@ export async function updateProject(
     ...existingResult.value,
     title,
     description: data.description ?? existingResult.value.description,
+    plotConfig: data.plotConfig ?? existingResult.value.plotConfig,
     updatedAt: Date.now(),
   };
 

@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { IDBObjectStore as FakeIDBObjectStore } from 'fake-indexeddb';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ProjectManager } from './ProjectManager';
+import { renderWithProjects } from '../test/renderWithProjects';
 
 function makeFailingRequest(error: DOMException | null): IDBRequest {
   const request = {
@@ -25,7 +26,7 @@ describe('ProjectManager', () => {
   });
 
   it('shows a disabled loading selector while projects are loading', () => {
-    render(<ProjectManager />);
+    renderWithProjects(<ProjectManager />);
 
     const projectSelector = screen.getByRole('button', { name: 'Loading projects' });
 
@@ -36,7 +37,7 @@ describe('ProjectManager', () => {
 
   it('creates a project and selects it', async () => {
     const user = userEvent.setup();
-    render(<ProjectManager />);
+    renderWithProjects(<ProjectManager />);
 
     await user.click(await screen.findByRole('button', { name: 'Untitled' }));
     await user.click(screen.getByRole('menuitem', { name: 'New project' }));
@@ -49,7 +50,7 @@ describe('ProjectManager', () => {
 
   it('deletes the selected project and selects the remaining project', async () => {
     const user = userEvent.setup();
-    render(<ProjectManager />);
+    renderWithProjects(<ProjectManager />);
 
     await user.click(await screen.findByRole('button', { name: 'Untitled' }));
     await user.click(screen.getByRole('menuitem', { name: 'New project' }));
@@ -65,7 +66,7 @@ describe('ProjectManager', () => {
 
   it('shows the selected project name in the delete confirmation', async () => {
     const user = userEvent.setup();
-    render(<ProjectManager />);
+    renderWithProjects(<ProjectManager />);
 
     await user.click(await screen.findByRole('button', { name: 'Untitled' }));
     await user.click(screen.getByRole('menuitem', { name: 'New project' }));
@@ -80,7 +81,7 @@ describe('ProjectManager', () => {
 
   it('renames the selected project', async () => {
     const user = userEvent.setup();
-    render(<ProjectManager />);
+    renderWithProjects(<ProjectManager />);
 
     await user.click(await screen.findByRole('button', { name: 'Untitled' }));
     await user.click(screen.getByRole('menuitem', { name: 'New project' }));
@@ -98,7 +99,7 @@ describe('ProjectManager', () => {
 
   it('persists project selection across remounts', async () => {
     const user = userEvent.setup();
-    const view = render(<ProjectManager />);
+    const view = renderWithProjects(<ProjectManager />);
 
     await user.click(await screen.findByRole('button', { name: 'Untitled' }));
     await user.click(screen.getByRole('menuitem', { name: 'New project' }));
@@ -111,14 +112,14 @@ describe('ProjectManager', () => {
     await screen.findByRole('button', { name: 'Untitled' });
 
     view.unmount();
-    render(<ProjectManager />);
+    renderWithProjects(<ProjectManager />);
 
     expect(await screen.findByRole('button', { name: 'Untitled' })).toBeInTheDocument();
   });
 
   it('shows project errors to the user', async () => {
     const user = userEvent.setup();
-    render(<ProjectManager />);
+    renderWithProjects(<ProjectManager />);
 
     await user.click(await screen.findByRole('button', { name: 'Untitled' }));
     await user.click(screen.getByRole('menuitem', { name: 'New project' }));
@@ -133,7 +134,7 @@ describe('ProjectManager', () => {
 
   it('keeps the project dialog open when create fails', async () => {
     const user = userEvent.setup();
-    render(<ProjectManager />);
+    renderWithProjects(<ProjectManager />);
 
     await user.click(await screen.findByRole('button', { name: 'Untitled' }));
     await user.click(screen.getByRole('menuitem', { name: 'New project' }));
@@ -150,7 +151,7 @@ describe('ProjectManager', () => {
 
   it('keeps the delete dialog open when delete fails', async () => {
     const user = userEvent.setup();
-    render(<ProjectManager />);
+    renderWithProjects(<ProjectManager />);
 
     await user.click(await screen.findByRole('button', { name: 'Untitled' }));
     await user.click(screen.getByRole('menuitem', { name: 'New project' }));
@@ -171,7 +172,7 @@ describe('ProjectManager', () => {
 
   it('keeps project error text visible while the snackbar closes', async () => {
     const user = userEvent.setup();
-    render(<ProjectManager />);
+    renderWithProjects(<ProjectManager />);
 
     await user.click(await screen.findByRole('button', { name: 'Untitled' }));
     await user.click(screen.getByRole('menuitem', { name: 'New project' }));

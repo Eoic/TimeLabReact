@@ -9,8 +9,26 @@ import {
   updateRecord,
   STORE_PROJECTS,
 } from './storage';
-import { type Project } from '../database/models';
+import { type PlotConfig, type Project } from '../database/models';
 import { unwrapErr, unwrapOk } from '../shared/result';
+
+const plotConfig: PlotConfig = {
+  axes: {
+    x: 'time',
+    y: 'amplitude',
+  },
+  appearance: {
+    downsampling: 'none',
+    isAreaFillEnabled: true,
+    isShowGridlinesEnabled: true,
+    isShowPointsEnabled: true,
+    isSmoothLineEnabled: true,
+    lineWidth: 2,
+  },
+  guides: {
+    thresholds: [],
+  },
+};
 
 function makeFailingRequest(error: DOMException | null): IDBRequest {
   const request = {
@@ -49,6 +67,7 @@ describe('storage', () => {
       updatedAt: null,
       isArchived: false,
       isSelected: true,
+      plotConfig,
     };
 
     unwrapOk(await insertRecord(record, STORE_PROJECTS));
@@ -67,6 +86,7 @@ describe('storage', () => {
       updatedAt: null,
       isArchived: false,
       isSelected: true,
+      plotConfig,
     };
 
     unwrapOk(await insertRecord(record, STORE_PROJECTS));
@@ -86,6 +106,7 @@ describe('storage', () => {
       updatedAt: null,
       isArchived: false,
       isSelected: true,
+      plotConfig,
     };
 
     unwrapOk(await insertRecord(record, STORE_PROJECTS));
@@ -123,6 +144,15 @@ describe('storage', () => {
     for (const result of results) {
       expect(unwrapErr(result).name).toBe('StorageError');
     }
+  });
+
+  it('opens an existing current-version database', async () => {
+    const setupDatabase = await makeOpenDatabase(indexedDB, 'timelab', 3, [STORE_PROJECTS])();
+    setupDatabase.close();
+
+    const records = unwrapOk(await getAllRecords<Project>(STORE_PROJECTS));
+
+    expect(records).toEqual([]);
   });
 
   it('returns an error when getAll request fails', async () => {

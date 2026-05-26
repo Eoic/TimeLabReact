@@ -3,10 +3,9 @@ import { err, ok, type Result } from '../shared/result';
 
 export type IDBRecord = Record<string, unknown> & { id: string };
 
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const DB_NAME = 'timelab';
 export const STORE_PROJECTS = 'projects';
-export const STORE_PLOT_CONFIG = 'plot-config';
 
 let cachedFactory: IDBFactory | null = null;
 let cachedDatabase: IDBDatabase | null = null;

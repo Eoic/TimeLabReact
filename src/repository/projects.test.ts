@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Project } from '../database/models/project';
 import { getRecord, STORE_PROJECTS } from '../database/storage';
 import {
+  bootstrap,
   createProject,
   deleteProject,
   getAllProjects,
@@ -12,6 +13,19 @@ import {
 import { unwrapErr, unwrapOk } from '../shared/result';
 
 describe('projects repository', async () => {
+  it('creates only one default project when bootstrapped concurrently', async () => {
+    await Promise.all(Array.from({ length: 4 }, async () => unwrapOk(await bootstrap())));
+
+    const projects = unwrapOk(await getAllProjects());
+
+    expect(projects).toHaveLength(1);
+    expect(projects[0]).toMatchObject({
+      title: 'Untitled',
+      description: '',
+      isSelected: true,
+    });
+  });
+
   it('can create a new project from valid data', async () => {
     const projectData: CreateProjectData = {
       title: '    Project #1    ',

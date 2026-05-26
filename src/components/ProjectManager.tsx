@@ -33,7 +33,7 @@ export function ProjectManager() {
 
   const projectDialog = useProjectDialogState();
   const projectList = useMemo(() => projects.data ?? [], [projects.data]);
-  const selectedProject = useMemo(() => projectList.find((project) => project.isSelected) ?? null, [projectList]);
+  const selectedProject = projects.selectedProject;
 
   const showError = (error: unknown, fallbackMessage: string) => {
     setErrorSnackbar({

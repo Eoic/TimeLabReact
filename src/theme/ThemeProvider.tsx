@@ -17,9 +17,7 @@ type ThemeProviderProps = {
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [themeMode, setThemeModeState] = useState<ThemeMode>(readStoredThemeMode);
-
   const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(getSystemTheme);
-
   const resolvedTheme = themeMode === 'auto' ? systemTheme : themeMode;
 
   const setThemeMode = useCallback((nextThemeMode: ThemeMode) => {

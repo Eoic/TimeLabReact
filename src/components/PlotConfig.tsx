@@ -4,17 +4,19 @@ import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import MenuItem from '@mui/material/MenuItem';
 import Slider from '@mui/material/Slider';
+import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useDebounce } from '../hooks/useDebounce';
 import { FormCheckbox } from './FormCheckbox';
 import { MaterialSymbol } from './MaterialSymbol';
 import { SearchableDropdown } from './SearchableDropdown';
 import type { SearchableDropdownOption } from './SearchableDropdown';
 import type { PlotConfigFormData } from '../forms/plotConfig';
-import type { Downsampling, PlotAxis, Threshold } from '../database/models/plotConfig';
+import type { Downsampling, PlotAxis, PlotConfig as ProjectPlotConfig, Threshold } from '../database/models/project';
+import { useProjects } from '../hooks/useProjects';
 
 type PlotConfigSectionProps = {
   title: string;
@@ -22,6 +24,13 @@ type PlotConfigSectionProps = {
 };
 
 type UpdateThreshold = <TKey extends keyof Threshold>(id: string, key: TKey, value: Threshold[TKey]) => void;
+
+type UpdatePlotConfig = (currentConfiguration: ProjectPlotConfig) => ProjectPlotConfig;
+
+type PlotConfigEditorProps = {
+  config: ProjectPlotConfig;
+  onPersist: (config: ProjectPlotConfig) => void;
+};
 
 type ThresholdEditorProps = {
   index: number;
@@ -35,26 +44,6 @@ type ColorFieldProps = {
   value: string;
   label: string;
   onChange: (value: string) => void;
-};
-
-const defaultPlotConfig: PlotConfigFormData = {
-  axes: {
-    x: 'time',
-    y: 'amplitude',
-  },
-
-  appearance: {
-    downsampling: 'none',
-    isAreaFillEnabled: true,
-    isShowPointsEnabled: true,
-    isSmoothLineEnabled: true,
-    isShowGridlinesEnabled: true,
-    lineWidth: 2,
-  },
-
-  guides: {
-    thresholds: [],
-  },
 };
 
 const axisOptions: [SearchableDropdownOption<PlotAxis>, ...SearchableDropdownOption<PlotAxis>[]] = [
@@ -371,12 +360,109 @@ function ThresholdEditor({ index, onRemove, onUpdate, threshold }: ThresholdEdit
   );
 }
 
+function getNextThresholdNumber(thresholds: Threshold[]) {
+  const highestGeneratedId = thresholds.reduce((highestId, threshold) => {
+    const match = /^threshold-(\d+)$/.exec(threshold.id);
+
+    if (!match) {
+      return highestId;
+    }
+
+    return Math.max(highestId, Number(match[1]));
+  }, 0);
+
+  return highestGeneratedId + 1;
+}
+
+function PlotConfigLoadingState() {
+  return (
+    <Stack aria-busy="true" aria-label="Loading plot configuration" role="status" spacing={1.25}>
+      <PlotConfigSection title="">
+        <Stack spacing={1}>
+          <Skeleton animation="wave" height={20} variant="text" width={50} />
+          <Skeleton animation="wave" height={40} variant="rounded" />
+          <Skeleton animation="wave" height={40} variant="rounded" />
+        </Stack>
+      </PlotConfigSection>
+
+      <PlotConfigSection title="">
+        <Stack spacing={1.5}>
+          {Array.from({ length: 4 }, (_, index) => (
+            <Box
+              key={index}
+              sx={{
+                alignItems: 'center',
+                display: 'flex',
+                gap: 1.25,
+                minHeight: 32,
+              }}
+            >
+              <Skeleton animation="wave" height={20} variant="rounded" width={20} />
+              <Skeleton animation="wave" height={18} variant="text" width="58%" />
+            </Box>
+          ))}
+
+          <Box sx={{ pt: 0.5 }}>
+            <Box
+              sx={{
+                alignItems: 'center',
+                display: 'flex',
+                justifyContent: 'space-between',
+                mb: 0.5,
+              }}
+            >
+              <Skeleton animation="wave" height={20} variant="text" width="42%" />
+              <Skeleton animation="wave" height={18} variant="text" width={28} />
+            </Box>
+            <Skeleton animation="wave" height={32} variant="rounded" />
+          </Box>
+
+          <Skeleton animation="wave" height={40} variant="rounded" />
+        </Stack>
+      </PlotConfigSection>
+
+      <PlotConfigSection title="">
+        <Skeleton animation="wave" height={31} variant="rounded" />
+      </PlotConfigSection>
+    </Stack>
+  );
+}
+
 export function PlotConfig() {
-  const nextThresholdId = useRef(1);
-  const [configuration, setConfiguration] = useState<PlotConfigFormData>(defaultPlotConfig);
+  const { isLoading, selectedProject, updateProject } = useProjects();
+
+  if (isLoading) {
+    return <PlotConfigLoadingState />;
+  }
+
+  if (!selectedProject) {
+    return null;
+  }
+
+  return (
+    <PlotConfigEditor
+      config={selectedProject.plotConfig}
+      key={selectedProject.id}
+      onPersist={(config) => {
+        void updateProject(selectedProject.id, { plotConfig: config });
+      }}
+    />
+  );
+}
+
+function PlotConfigEditor({ config: initialConfig, onPersist }: PlotConfigEditorProps) {
+  const nextThresholdId = useRef(getNextThresholdNumber(initialConfig.guides.thresholds));
+  const [config, setConfig] = useState(initialConfig);
+
+  const onChange = (updateConfig: UpdatePlotConfig) => {
+    const nextConfig = updateConfig(config);
+
+    setConfig(nextConfig);
+    onPersist(nextConfig);
+  };
 
   const updateAxis = (axis: keyof PlotConfigFormData['axes'], value: PlotAxis) => {
-    setConfiguration((currentConfiguration) => ({
+    onChange((currentConfiguration) => ({
       ...currentConfiguration,
       axes: {
         ...currentConfiguration.axes,
@@ -389,7 +475,7 @@ export function PlotConfig() {
     key: TKey,
     value: PlotConfigFormData['appearance'][TKey],
   ) => {
-    setConfiguration((currentConfiguration) => ({
+    onChange((currentConfiguration) => ({
       ...currentConfiguration,
       appearance: {
         ...currentConfiguration.appearance,
@@ -401,7 +487,7 @@ export function PlotConfig() {
   const addThreshold = () => {
     const thresholdNumber = nextThresholdId.current++;
 
-    setConfiguration((currentConfiguration) => ({
+    onChange((currentConfiguration) => ({
       ...currentConfiguration,
       guides: {
         ...currentConfiguration.guides,
@@ -421,7 +507,7 @@ export function PlotConfig() {
   };
 
   const updateThreshold: UpdateThreshold = (id, key, value) => {
-    setConfiguration((currentConfiguration) => ({
+    onChange((currentConfiguration) => ({
       ...currentConfiguration,
       guides: {
         ...currentConfiguration.guides,
@@ -438,7 +524,7 @@ export function PlotConfig() {
   };
 
   const removeThreshold = (id: string) => {
-    setConfiguration((currentConfiguration) => ({
+    onChange((currentConfiguration) => ({
       ...currentConfiguration,
       guides: {
         ...currentConfiguration.guides,
@@ -446,11 +532,6 @@ export function PlotConfig() {
       },
     }));
   };
-
-  useEffect(() => {
-    // TODO:
-    // Save to DB.
-  }, [configuration]);
 
   return (
     <Stack spacing={1.25}>
@@ -460,13 +541,13 @@ export function PlotConfig() {
             label="X axis"
             onChange={(value) => updateAxis('x', value)}
             options={axisOptions}
-            value={configuration.axes.x}
+            value={config.axes.x}
           />
           <SearchableDropdown
             label="Y axis"
             onChange={(value) => updateAxis('y', value)}
             options={axisOptions}
-            value={configuration.axes.y}
+            value={config.axes.y}
           />
         </Stack>
       </PlotConfigSection>
@@ -474,25 +555,25 @@ export function PlotConfig() {
       <PlotConfigSection title="Appearance">
         <Stack spacing={1.5}>
           <FormCheckbox
-            isChecked={configuration.appearance.isSmoothLineEnabled}
+            isChecked={config.appearance.isSmoothLineEnabled}
             label="Smooth line"
             onChange={(isChecked) => updateAppearance('isSmoothLineEnabled', isChecked)}
           />
 
           <FormCheckbox
-            isChecked={configuration.appearance.isAreaFillEnabled}
+            isChecked={config.appearance.isAreaFillEnabled}
             label="Area fill"
             onChange={(isChecked) => updateAppearance('isAreaFillEnabled', isChecked)}
           />
 
           <FormCheckbox
-            isChecked={configuration.appearance.isShowPointsEnabled}
+            isChecked={config.appearance.isShowPointsEnabled}
             label="Show points"
             onChange={(isChecked) => updateAppearance('isShowPointsEnabled', isChecked)}
           />
 
           <FormCheckbox
-            isChecked={configuration.appearance.isShowGridlinesEnabled}
+            isChecked={config.appearance.isShowGridlinesEnabled}
             label="Show gridlines"
             onChange={(isChecked) => updateAppearance('isShowGridlinesEnabled', isChecked)}
           />
@@ -510,7 +591,7 @@ export function PlotConfig() {
                 Line width
               </Typography>
               <Typography color="text.secondary" variant="caption">
-                {configuration.appearance.lineWidth}px
+                {config.appearance.lineWidth}px
               </Typography>
             </Box>
 
@@ -522,7 +603,7 @@ export function PlotConfig() {
                 updateAppearance('lineWidth', Array.isArray(nextValue) ? (nextValue[0] ?? 1) : nextValue)
               }
               step={0.5}
-              value={configuration.appearance.lineWidth}
+              value={config.appearance.lineWidth}
               valueLabelDisplay="auto"
             />
           </Box>
@@ -531,7 +612,7 @@ export function PlotConfig() {
             label="Downsampling"
             onChange={(value) => updateAppearance('downsampling', value)}
             options={downsamplingOptions}
-            value={configuration.appearance.downsampling}
+            value={config.appearance.downsampling}
           />
         </Stack>
       </PlotConfigSection>
@@ -548,11 +629,11 @@ export function PlotConfig() {
             Add threshold
           </Button>
 
-          {configuration.guides.thresholds.length === 0 ? (
+          {config.guides.thresholds.length === 0 ? (
             <Typography color="text.secondary" variant="body2"></Typography>
           ) : (
             <Stack spacing={1}>
-              {configuration.guides.thresholds.map((threshold, index) => (
+              {config.guides.thresholds.map((threshold, index) => (
                 <ThresholdEditor
                   index={index}
                   key={threshold.id}
